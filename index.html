@@ -1,0 +1,3471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta name="description" content="Registro diario de asistencia escolar y resumen estadístico mensual según formato oficial MPPE. 100% offline.">
+  <title>Asistencia Escolar - MPPE Venezuela</title>
+
+  <style>
+    /* 
+      Asistencia Escolar Mobile App Styling
+      Estilo moderno, responsivo, soporte de modo oscuro, adaptado al formato venezolano MPPE
+    */
+    :root {
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --boys-color: #0284c7;
+      --boys-bg: #f0f9ff;
+      --girls-color: #db2777;
+      --girls-bg: #fdf2f8;
+      --noclass-color: #dc2626;
+      --noclass-bg: #fef2f2;
+      --success: #16a34a;
+      --warning: #d97706;
+      --surface: #ffffff;
+      --background: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-sm: 0 2px 5px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 25px -5px rgba(30,64,175,0.15);
+    }
+
+    body.dark-mode {
+      --background: #0f172a;
+      --surface: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --primary-light: #1e293b;
+      --boys-bg: #0c4a6e;
+      --girls-bg: #831843;
+      --noclass-bg: #450a0a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding-bottom: 95px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* HEADER */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+
+    body.dark-mode .app-header {
+      background: rgba(30, 41, 59, 0.96);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+    }
+
+    .brand-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    .brand-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .offline-badge {
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    body.dark-mode .offline-badge {
+      background: #14532d;
+      color: #86efac;
+    }
+
+    .offline-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background-color: #22c55e;
+      border-radius: 50%;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .badge-counter {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+    }
+
+    /* DATE SELECTOR */
+    .date-selector-card {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      border: none;
+    }
+
+    .date-selector-card label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .date-input-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .date-input-wrapper input[type="date"] {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .btn-today {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* CLASES SÍ / NO SELECTOR */
+    .class-status-selector {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      margin-bottom: 12px;
+    }
+
+    .class-status-btn {
+      padding: 12px;
+      border: none;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .class-status-btn.active.yes {
+      background: #16a34a;
+      color: white;
+    }
+
+    .class-status-btn.active.no {
+      background: #dc2626;
+      color: white;
+    }
+
+    .word-counter-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .word-counter-badge.warn {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .reason-textarea {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid #fca5a5;
+      background: var(--surface);
+      color: var(--text-main);
+      font-size: 14px;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+    }
+
+    /* CONTADORES V Y H */
+    .counters-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .counter-card {
+      padding: 14px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+    }
+
+    .counter-card.boys {
+      background: var(--boys-bg);
+      border: 1px solid #bae6fd;
+    }
+
+    .counter-card.girls {
+      background: var(--girls-bg);
+      border: 1px solid #fbcfe8;
+    }
+
+    body.dark-mode .counter-card.boys { border-color: #0284c7; }
+    body.dark-mode .counter-card.girls { border-color: #be185d; }
+
+    .counter-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .counter-card.boys .counter-title { color: var(--boys-color); }
+    .counter-card.girls .counter-title { color: var(--girls-color); }
+    body.dark-mode .counter-card.boys .counter-title { color: #38bdf8; }
+    body.dark-mode .counter-card.girls .counter-title { color: #f472b6; }
+
+    .counter-display-input {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1;
+      margin: 4px 0;
+      width: 100%;
+      text-align: center;
+      border: 1px dashed transparent;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      outline: none;
+    }
+
+    .counter-display-input:focus {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    body.dark-mode .counter-display-input:focus {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .counter-card.boys .counter-display-input { color: #0369a1; }
+    .counter-card.girls .counter-display-input { color: #be185d; }
+    body.dark-mode .counter-card.boys .counter-display-input { color: #7dd3fc; }
+    body.dark-mode .counter-card.girls .counter-display-input { color: #f472b6; }
+
+    .counter-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-counter {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .btn-counter:active { transform: scale(0.92); }
+    .boys .btn-counter { background: #0284c7; color: white; }
+    .girls .btn-counter { background: #db2777; color: white; }
+
+    /* TOTAL ASISTENCIA CARD */
+    .total-summary-card {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .total-summary-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .total-summary-sub {
+      font-size: 11px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .total-summary-value {
+      font-size: 32px;
+      font-weight: 800;
+    }
+
+    /* INASISTENTES LIST & FORMS */
+    .inline-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .form-control-sm {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--surface);
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .form-control-sm:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-add-item {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .items-table th {
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 6px 8px;
+      text-align: left;
+      font-size: 11px;
+    }
+
+    body.dark-mode .items-table th { background: #0f172a; }
+
+    .items-table td {
+      padding: 7px 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-del-item {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: none;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    body.dark-mode .btn-del-item {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+
+    /* SAVE BUTTON */
+    .btn-save-main {
+      width: 100%;
+      background: linear-gradient(135deg, #1e40af, #2563eb);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: var(--radius-lg);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-save-main:active { transform: scale(0.98); }
+
+    /* SUMMARY TAB */
+    .month-picker-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .month-picker-bar select {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .metric-card.primary {
+      grid-column: span 2;
+      background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+      color: white;
+    }
+
+    .metric-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .metric-card.primary .metric-title { color: #bfdbfe; }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .metric-sub {
+      font-size: 11px;
+      margin-top: 3px;
+      color: var(--text-muted);
+    }
+
+    .metric-card.primary .metric-sub { color: #dbeafe; }
+
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+    }
+
+    .daily-log-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      color: var(--text-main);
+      font-size: 12px;
+    }
+
+    .daily-log-table th {
+      background: #f1f5f9;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 10px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    body.dark-mode .daily-log-table th { background: #0f172a; }
+
+    .daily-log-table td {
+      padding: 8px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    }
+
+    body.dark-mode .bottom-nav { background: rgba(30, 41, 59, 0.96); }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 18px; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-container {
+      background: var(--surface);
+      color: var(--text-main);
+      width: 100%;
+      max-width: 500px;
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow-lg);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .btn-close-modal {
+      background: #f1f5f9;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.dark-mode .btn-close-modal { background: #334155; color: white; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #0f172a;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* COLLAPSIBLE DETAILS */
+    details {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    details summary {
+      padding: 12px 14px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      background: #f8fafc;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    body.dark-mode details summary { background: #1e293b; }
+
+    details[open] summary {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .details-body {
+      padding: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER NATIVO MÓVIL -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">🇻🇪</div>
+      <div class="brand-text">
+        <h1>Asistencia Escolar</h1>
+        <p>Resumen Estadístico Mensual (MPPE)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="offline-badge">100% Offline</span>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: REGISTRO DIARIO DE ASISTENCIA       -->
+    <!-- ========================================== -->
+    <section id="tab-form" class="tab-content active">
+
+      <!-- SELECTOR DE FECHA -->
+      <div class="card date-selector-card">
+        <label for="inputDate">Fecha del Registro</label>
+        <div class="date-input-wrapper">
+          <input type="date" id="inputDate">
+          <button type="button" id="btnToday" class="btn-today">Hoy</button>
+        </div>
+      </div>
+
+      <!-- PASO 1: SE DIO O NO SE DIO CLASES -->
+      <div class="card">
+        <div class="card-title">
+          <span>1. ¿Se impartieron clases este día?</span>
+        </div>
+
+        <div class="class-status-selector">
+          <button type="button" id="btnClassYes" class="class-status-btn active yes">
+            ✅ Sí, hubo clases
+          </button>
+          <button type="button" id="btnClassNo" class="class-status-btn no">
+            🚫 No hubo clases
+          </button>
+        </div>
+
+        <!-- MOTIVO SI NO HUBO CLASES -->
+        <div id="containerNoClassReason" style="display: none; margin-top: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 11px; font-weight: 700; color: #dc2626; text-transform: uppercase;">
+              Motivo o razón de suspensión:
+            </label>
+            <span id="wordCountBadge" class="word-counter-badge">0 / 20 palabras sugeridas</span>
+          </div>
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
+            💡 <em>Sugerencia: No exceder 20 palabras para que ajuste perfectamente en la casilla del formato oficial.</em>
+          </p>
+          <textarea id="inputNoClassReason" class="reason-textarea" placeholder="Ej: Suspensión por mantenimiento de aulas y fumigación general..."></textarea>
+        </div>
+      </div>
+
+      <!-- SECCIÓN QUE SOLO SE MUESTRA SI SÍ HUBO CLASES -->
+      <div id="classActiveSection">
+
+        <!-- PASO 2: ASISTENCIA V Y H (T ES AUTOMÁTICO) -->
+        <div class="card">
+          <div class="card-title">
+            <span>2. Cantidad de Asistentes</span>
+            <span style="font-size:11px; color:var(--text-muted); font-weight:normal;">T = V + H automático</span>
+          </div>
+
+          <div class="counters-grid">
+            <!-- VARONES (V) -->
+            <div class="counter-card boys">
+              <div class="counter-title">👦 Varones (V)</div>
+              <input type="number" id="inputNinos" class="counter-display-input" min="0" value="0" inputmode="numeric" pattern="[0-9]*">
+              <div class="counter-controls">
+                <button type="button" id="btnMinusNinos" class="btn-counter">−</button>
+                <button type="button" id="btnPlusNinos" class="btn-counter">+</button>
+              </div>
+            </div>
+
+            <!-- HEMBRAS (H) -->
+            <div class="counter-card girls">
+              <div class="counter-title">👧 Hembras (H)</div>
+              <input type="number" id="inputNinas" class="counter-display-input" min="0" value="0" inputmode="numeric" pattern="[0-9]*">
+              <div class="counter-controls">
+                <button type="button" id="btnMinusNinas" class="btn-counter">−</button>
+                <button type="button" id="btnPlusNinas" class="btn-counter">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ASISTENCIA TOTAL DEL DÍA (AUTOMÁTICA) -->
+          <div class="total-summary-card">
+            <div>
+              <div class="total-summary-title">Total Asistentes (T)</div>
+              <div class="total-summary-sub">Suma automática de Varones + Hembras</div>
+            </div>
+            <div id="displayTotal" class="total-summary-value">0</div>
+          </div>
+        </div>
+
+        <!-- PASO 3: LISTA DE ALUMNOS INASISTENTES DEL DÍA (SIN LÍMITE) -->
+        <div class="card">
+          <div class="card-title">
+            <span>3. Lista de Inasistentes del Día</span>
+            <span id="badgeInasistentesCount" class="badge-counter">0 alumnos</span>
+          </div>
+
+          <div class="inline-form">
+            <input type="text" id="inasistenteNombre" class="form-control-sm" placeholder="Nombre">
+            <input type="text" id="inasistenteApellido" class="form-control-sm" placeholder="Apellido">
+            <input type="text" id="inasistenteCedula" class="form-control-sm" placeholder="Cédula / Cédula escolar">
+            <input type="text" id="inasistenteRazon" class="form-control-sm" placeholder="Razón (Opcional)">
+          </div>
+
+          <button type="button" id="btnAddInasistente" class="btn-add-item" style="width: 100%; margin-bottom: 8px;">
+            ➕ Registrar Alumno Inasistente
+          </button>
+
+          <div id="containerInasistentesList" style="overflow-x: auto;">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Cédula</th>
+                  <th>Razón</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbodyInasistentes">
+                <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Sin inasistencias registradas hoy.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div> <!-- Fin #classActiveSection -->
+
+      <!-- SECCIONES DE MATRÍCULA Y MOVIMIENTOS DEL MES -->
+      <div class="card">
+        <div class="card-title">
+          <span>4. Movimientos y Listados del Mes</span>
+        </div>
+
+        <!-- 4.1 INGRESADOS (MÁX 5 AL MES) -->
+        <details>
+          <summary>
+            <span>🟢 Estudiantes Ingresados/as</span>
+            <span id="badgeIngresadosCount" class="badge-counter">0 / 5 máx.</span>
+          </summary>
+          <div class="details-body">
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+              Límite de 5 registros mensuales según formato MPPE.
+            </p>
+            <div class="inline-form">
+              <input type="text" id="ingresadoNombre" class="form-control-sm" placeholder="Nombre y Apellido">
+              <select id="ingresadoGen" class="form-control-sm">
+                <option value="V">Varón (V)</option>
+                <option value="H">Hembra (H)</option>
+              </select>
+              <input type="text" id="ingresadoPlantel" class="form-control-sm" placeholder="Plantel de procedencia">
+              <input type="date" id="ingresadoFecha" class="form-control-sm">
+            </div>
+            <button type="button" id="btnAddIngresado" class="btn-add-item" style="width: 100%; margin-bottom: 8px;">
+              ➕ Agregar Estudiante Ingresado
+            </button>
+            <table class="items-table">
+              <thead>
+                <tr><th>Nombre</th><th>Gen</th><th>Procedencia</th><th>Fecha</th><th></th></tr>
+              </thead>
+              <tbody id="tbodyIngresados"></tbody>
+            </table>
+          </div>
+        </details>
+
+        <!-- 4.2 EGRESADOS (MÁX 5 AL MES) -->
+        <details>
+          <summary>
+            <span>🔴 Estudiantes Egresados/as</span>
+            <span id="badgeEgresadosCount" class="badge-counter">0 / 5 máx.</span>
+          </summary>
+          <div class="details-body">
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+              Límite de 5 registros mensuales según formato MPPE.
+            </p>
+            <div class="inline-form">
+              <input type="text" id="egresadoNombre" class="form-control-sm" placeholder="Nombre y Apellido">
+              <select id="egresadoGen" class="form-control-sm">
+                <option value="V">Varón (V)</option>
+                <option value="H">Hembra (H)</option>
+              </select>
+              <input type="text" id="egresadoPlantel" class="form-control-sm" placeholder="Plantel aceptación de cupo">
+              <input type="date" id="egresadoFecha" class="form-control-sm">
+            </div>
+            <button type="button" id="btnAddEgresado" class="btn-add-item" style="width: 100%; margin-bottom: 8px;">
+              ➕ Agregar Estudiante Egresado
+            </button>
+            <table class="items-table">
+              <thead>
+                <tr><th>Nombre</th><th>Gen</th><th>Plantel Aceptación</th><th>Fecha</th><th></th></tr>
+              </thead>
+              <tbody id="tbodyEgresados"></tbody>
+            </table>
+          </div>
+        </details>
+
+        <!-- 4.3 REPITIENTES (MÁX 5 AL MES) -->
+        <details>
+          <summary>
+            <span>🔄 Estudiantes Repitientes</span>
+            <span id="badgeRepitientesCount" class="badge-counter">0 / 5 máx.</span>
+          </summary>
+          <div class="details-body">
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+              Selección exclusiva: 1ª, 2ª o 3ª vez. Límite de 5 registros mensuales.
+            </p>
+            <div class="inline-form">
+              <input type="text" id="repitienteNombre" class="form-control-sm" placeholder="Nombre y Apellido">
+              <input type="number" id="repitienteEdad" class="form-control-sm" placeholder="Edad" min="3" max="20">
+              <select id="repitienteVez" class="form-control-sm" style="grid-column: span 2;">
+                <option value="1">1ª vez</option>
+                <option value="2">2ª vez</option>
+                <option value="3">3ª vez</option>
+              </select>
+            </div>
+            <button type="button" id="btnAddRepitiente" class="btn-add-item" style="width: 100%; margin-bottom: 8px;">
+              ➕ Agregar Estudiante Repitiente
+            </button>
+            <table class="items-table">
+              <thead>
+                <tr><th>Nombre</th><th>Edad</th><th>Condición</th><th></th></tr>
+              </thead>
+              <tbody id="tbodyRepitientes"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+
+      <!-- BOTON GUARDAR -->
+      <button type="button" id="btnSaveAttendance" class="btn-save-main">
+        💾 Guardar Registro Diario
+      </button>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: RESUMEN MENSUAL E INFORMES          -->
+    <!-- ========================================== -->
+    <section id="tab-summary" class="tab-content">
+      
+      <!-- BARRA DE SELECCION DE MES/AÑO -->
+      <div class="card" style="padding: 12px;">
+        <div class="month-picker-bar">
+          <select id="selectMonth">
+            <option value="01">Enero</option>
+            <option value="02">Febrero</option>
+            <option value="03">Marzo</option>
+            <option value="04">Abril</option>
+            <option value="05">Mayo</option>
+            <option value="06">Junio</option>
+            <option value="07">Julio</option>
+            <option value="08">Agosto</option>
+            <option value="09">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+          <select id="selectYear"></select>
+        </div>
+
+        <!-- BOTONES DE EXPORTACION SEGÚN FORMATO MPPE -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button type="button" id="btnExportPDF" style="background:#dc2626; color:white; border:none; padding:12px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+            📄 Exportar PDF (MPPE)
+          </button>
+          <button type="button" id="btnExportExcel" style="background:#16a34a; color:white; border:none; padding:12px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+            📊 Exportar Excel (MPPE)
+          </button>
+        </div>
+      </div>
+
+      <!-- METRICAS Y PROMEDIOS -->
+      <div class="metrics-grid">
+        <div class="metric-card primary">
+          <div class="metric-title">Promedio Asistencia Diaria</div>
+          <div id="valPromedioTotal" class="metric-value">0</div>
+          <div id="valPromedioNinosNinas" class="metric-sub">0 Varones (V) / 0 Hembras (H)</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Días con Clases</div>
+          <div id="valDiasLectivos" class="metric-value" style="color:#16a34a;">0</div>
+          <div class="metric-sub">Días impartidos</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Días Sin Clases</div>
+          <div id="valDiasSinClases" class="metric-value" style="color:#dc2626;">0</div>
+          <div class="metric-sub">Días suspendidos</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Ingresados Mes</div>
+          <div id="valIntegradosTotal" class="metric-value" style="color:#0284c7;">0</div>
+          <div class="metric-sub">Máx. 5 al mes</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Retirados Mes</div>
+          <div id="valRetiradosTotal" class="metric-value" style="color:#d97706;">0</div>
+          <div class="metric-sub">Egresados en el mes</div>
+        </div>
+      </div>
+
+      <!-- GRAFICO DE TENDENCIA -->
+      <div class="card">
+        <div class="card-title">📈 Tendencia de Asistencia Diaria</div>
+        <div id="chartContainer" style="margin-top: 10px;"></div>
+      </div>
+
+      <!-- TABLA BITÁCORA DIARIA DEL MES -->
+      <div class="card">
+        <div class="card-title">📅 Registros Diarios del Mes</div>
+        <div class="table-responsive" style="margin-top: 10px;">
+          <table class="daily-log-table">
+            <thead>
+              <tr>
+                <th>Día</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>V</th>
+                <th>H</th>
+                <th>Total</th>
+                <th>Inasist.</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="dailyLogTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: AJUSTES, CONFIGURACIÓN Y MODO OSCURO -->
+    <!-- ========================================== -->
+    <section id="tab-settings" class="tab-content">
+      
+      <!-- MODO OSCURO -->
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <strong style="font-size: 14px;">🌙 Modo Oscuro</strong>
+            <p style="font-size: 11px; color: var(--text-muted);">Interfaz optimizada para baja luminosidad</p>
+          </div>
+          <input type="checkbox" id="toggleDarkMode" style="width:20px; height:20px; cursor:pointer;">
+        </div>
+      </div>
+
+      <!-- DATOS INSTITUCIONALES DEL PLANTEL (MEMBRETE MPPE) -->
+      <div class="card">
+        <div class="card-title">🏫 Datos Institucionales del Plantel</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div>
+            <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Nombre del Plantel / Escuela</label>
+            <input type="text" id="cfgSchoolName" class="form-control-sm" placeholder="Ej. U.E.N. República de Indonesia">
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Código DEA</label>
+              <input type="text" id="cfgDeaCode" class="form-control-sm" placeholder="Ej. OD 17441503">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">RIF</label>
+              <input type="text" id="cfgSchoolRif" class="form-control-sm" placeholder="Ej. J-31685926-6">
+            </div>
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Ubicación / Dirección</label>
+            <input type="text" id="cfgSchoolLocation" class="form-control-sm" placeholder="Ej. Valle Arriba - Baruta">
+          </div>
+        </div>
+      </div>
+
+      <!-- DATOS DEL AULA Y DOCENTE -->
+      <div class="card">
+        <div class="card-title">📋 Datos del Aula y Docente</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div>
+            <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Docente</label>
+            <input type="text" id="cfgTeacherName" class="form-control-sm" placeholder="Ej. Prof. María Rodríguez">
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Grado</label>
+              <input type="text" id="cfgGrade" class="form-control-sm" placeholder="Ej. 3er Grado">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Sección</label>
+              <input type="text" id="cfgSection" class="form-control-sm" placeholder="Ej. A">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Año Escolar</label>
+              <input type="text" id="cfgSchoolYear" class="form-control-sm" placeholder="Ej. 2025-2026">
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Días Hábiles del Mes</label>
+              <input type="number" id="cfgDiasHabiles" class="form-control-sm" placeholder="Ej. 20" min="1" max="31">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MATRÍCULA INICIAL Y EXTRANJEROS -->
+      <div class="card">
+        <div class="card-title">📊 Matrícula Inicial y Extranjeros</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div>
+            <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Matriculados en 1º Día del Mes</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top:4px;">
+              <input type="number" id="cfgMatriculaV" class="form-control-sm" placeholder="Varones (V)" min="0">
+              <input type="number" id="cfgMatriculaH" class="form-control-sm" placeholder="Hembras (H)" min="0">
+            </div>
+          </div>
+          <div>
+            <label style="font-size: 11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Extranjeros Matriculados</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top:4px;">
+              <input type="number" id="cfgExtranjerosV" class="form-control-sm" placeholder="Varones (V)" min="0">
+              <input type="number" id="cfgExtranjerosH" class="form-control-sm" placeholder="Hembras (H)" min="0">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLASIFICACIÓN POR EDAD Y GÉNERO -->
+      <div class="card">
+        <div class="card-title">
+          <span>👶 Clasificación por Edad y Género</span>
+          <span style="font-size:10px; color:var(--text-muted);">Planilla Oficial</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+          Guarda las edades de tus alumnos. El total (T) se calcula automáticamente:
+        </p>
+        <div id="containerAgesConfig" style="display:flex; flex-direction:column; gap:6px;">
+          <!-- Filas de edades generadas dinámicamente -->
+        </div>
+        <button type="button" id="btnAddAgeRow" class="btn-add-item" style="margin-top: 8px; width:100%;">
+          ➕ Agregar otra edad
+        </button>
+      </div>
+
+      <!-- BOTONES DE GUARDAR O BORRAR CONFIGURACIÓN -->
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+        <button type="button" id="btnSaveConfig" style="background:#1e40af; color:white; border:none; padding:12px; border-radius:var(--radius-md); font-weight:700; font-size:13px; cursor:pointer;">
+          💾 Guardar Configuración Permanente
+        </button>
+        <button type="button" id="btnClearConfig" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer;">
+          🗑️ Borrar Configuración (Preguntar siempre antes de exportar)
+        </button>
+      </div>
+
+      <!-- RESPALDO JSON Y DEMO -->
+      <div class="card">
+        <div class="card-title">📦 Copia de Seguridad y Datos Demo</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" id="btnLoadDemoData" style="background:#16a34a; color:white; border:none; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer;">
+            ⚡ Cargar Datos de Demostración del Mes
+          </button>
+          <button type="button" id="btnExportBackup" style="background:#4f46e5; color:white; border:none; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer;">
+            ⬇️ Descargar Copia de Seguridad (.json)
+          </button>
+          <label style="background:#e0e7ff; color:#3730a3; border:1px dashed #6366f1; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; text-align:center; display:block;">
+            ⬆️ Restaurar Copia de Seguridad
+            <input type="file" id="inputImportBackup" accept=".json" style="display: none;">
+          </label>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- NAVEGACIÓN INFERIOR TÁCTIL -->
+  <nav class="bottom-nav">
+    <button type="button" class="nav-item active" data-tab="form">
+      <span class="nav-icon">📝</span>
+      <span>Registro</span>
+    </button>
+    <button type="button" class="nav-item" data-tab="summary">
+      <span class="nav-icon">📊</span>
+      <span>Resumen</span>
+    </button>
+    <button type="button" class="nav-item" data-tab="settings">
+      <span class="nav-icon">⚙️</span>
+      <span>Ajustes</span>
+    </button>
+  </nav>
+
+  <!-- MODAL: PREGUNTAR DATOS ESTADÍSTICOS ANTES DE EXPORTAR -->
+  <div id="modalExportPrompt" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">📄 Datos Requeridos para el Informe Oficial</h3>
+        <button type="button" id="btnCloseExportModal" class="btn-close-modal">✕</button>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+        Verifica o completa los datos del mes antes de generar el documento oficial (MPPE):
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <label style="font-size:11px; font-weight:700; text-transform:uppercase;">Días Hábiles del Mes:</label>
+          <input type="number" id="promptDiasHabiles" class="form-control-sm" placeholder="Ej. 20" min="1" max="31">
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:700; text-transform:uppercase;">Matrícula en 1º Día del Mes:</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <input type="number" id="promptMatriculaV" class="form-control-sm" placeholder="Varones (V)" min="0">
+            <input type="number" id="promptMatriculaH" class="form-control-sm" placeholder="Hembras (H)" min="0">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:700; text-transform:uppercase;">Extranjeros Matriculados:</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <input type="number" id="promptExtranjerosV" class="form-control-sm" placeholder="Varones (V)" min="0">
+            <input type="number" id="promptExtranjerosH" class="form-control-sm" placeholder="Hembras (H)" min="0">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px; font-weight:700; text-transform:uppercase;">Clasificación por Edad y Género:</label>
+          <div id="promptAgesContainer" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
+        </div>
+      </div>
+
+      <button type="button" id="btnConfirmExport" style="width:100%; margin-top:16px; background:#16a34a; color:white; border:none; padding:12px; border-radius:var(--radius-md); font-weight:700; cursor:pointer;">
+        ✅ Generar Documento Ahora
+      </button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICACIÓN -->
+  <div id="toast" class="toast">Guardado correctamente</div>
+
+  <!-- JAVASCRIPT EMBEBIDO AUTÓNOMO -->
+  <script>
+    /* ========================================================
+       1. DATABASE MANAGER (IndexedDB con LocalStorage fallback)
+       ======================================================== */
+    const DB_NAME = 'AsistenciaEscolarDB_MPPE';
+    const DB_VERSION = 2;
+    const STORE_DAILY = 'asistencia_diaria';
+    const STORE_INGRESADOS = 'estudiantes_ingresados';
+    const STORE_EGRESADOS = 'estudiantes_egresados';
+    const STORE_REPITIENTES = 'estudiantes_repitientes';
+
+    class AttendanceDB {
+      constructor() {
+        this.db = null;
+        this.initPromise = this.initDB();
+      }
+
+      async initDB() {
+        return new Promise((resolve) => {
+          if (!window.indexedDB) {
+            resolve(null);
+            return;
+          }
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+          request.onerror = () => resolve(null);
+          request.onsuccess = (e) => {
+            this.db = e.target.result;
+            resolve(this.db);
+          };
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_DAILY)) {
+              db.createObjectStore(STORE_DAILY, { keyPath: 'date' });
+            }
+            if (!db.objectStoreNames.contains(STORE_INGRESADOS)) {
+              const s = db.createObjectStore(STORE_INGRESADOS, { keyPath: 'id', autoIncrement: true });
+              s.createIndex('mes', 'mes', { unique: false });
+            }
+            if (!db.objectStoreNames.contains(STORE_EGRESADOS)) {
+              const s = db.createObjectStore(STORE_EGRESADOS, { keyPath: 'id', autoIncrement: true });
+              s.createIndex('mes', 'mes', { unique: false });
+            }
+            if (!db.objectStoreNames.contains(STORE_REPITIENTES)) {
+              const s = db.createObjectStore(STORE_REPITIENTES, { keyPath: 'id', autoIncrement: true });
+              s.createIndex('mes', 'mes', { unique: false });
+            }
+          };
+        });
+      }
+
+      /* REGISTROS DIARIOS */
+      async saveDailyRecord(rec) {
+        await this.initPromise;
+        const item = {
+          date: rec.date,
+          isNoClass: Boolean(rec.isNoClass),
+          noClassReason: rec.isNoClass ? (rec.noClassReason || '').trim() : '',
+          ninos: rec.isNoClass ? 0 : Math.max(0, Number(rec.ninos || 0)),
+          ninas: rec.isNoClass ? 0 : Math.max(0, Number(rec.ninas || 0)),
+          inasistentes: Array.isArray(rec.inasistentes) ? rec.inasistentes : [],
+          updatedAt: new Date().toISOString()
+        };
+
+        if (this.db) {
+          return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([STORE_DAILY], 'readwrite');
+            const req = tx.objectStore(STORE_DAILY).put(item);
+            req.onsuccess = () => resolve(item);
+            req.onerror = () => reject(req.error);
+          });
+        } else {
+          const all = this._getLS(STORE_DAILY);
+          all[item.date] = item;
+          localStorage.setItem(STORE_DAILY, JSON.stringify(all));
+          return item;
+        }
+      }
+
+      async getDailyRecord(dateStr) {
+        await this.initPromise;
+        if (this.db) {
+          return new Promise((resolve) => {
+            const tx = this.db.transaction([STORE_DAILY], 'readonly');
+            const req = tx.objectStore(STORE_DAILY).get(dateStr);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+          });
+        } else {
+          const all = this._getLS(STORE_DAILY);
+          return all[dateStr] || null;
+        }
+      }
+
+      async getRecordsByMonthYear(year, month) {
+        await this.initPromise;
+        let records = [];
+        if (this.db) {
+          records = await new Promise((resolve) => {
+            const tx = this.db.transaction([STORE_DAILY], 'readonly');
+            const req = tx.objectStore(STORE_DAILY).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          });
+        } else {
+          records = Object.values(this._getLS(STORE_DAILY));
+        }
+
+        const prefix = `${year}-${String(month).padStart(2, '0')}`;
+        const filtered = records.filter(r => r.date && r.date.startsWith(prefix));
+        filtered.sort((a, b) => a.date.localeCompare(b.date));
+        return filtered;
+      }
+
+      /* INGRESADOS (MÁX 5 AL MES) */
+      async getIngresados(year, month) {
+        const mesKey = `${year}-${String(month).padStart(2, '0')}`;
+        return this._getListByMes(STORE_INGRESADOS, mesKey);
+      }
+
+      async addIngresado(year, month, data) {
+        const list = await this.getIngresados(year, month);
+        if (list.length >= 5) {
+          throw new Error('Límite mensual alcanzado: Máximo 5 estudiantes ingresados permitidos en la planilla oficial.');
+        }
+        data.mes = `${year}-${String(month).padStart(2, '0')}`;
+        return this._addItem(STORE_INGRESADOS, data);
+      }
+
+      async deleteIngresado(id) {
+        return this._deleteItem(STORE_INGRESADOS, id);
+      }
+
+      /* EGRESADOS (MÁX 5 AL MES) */
+      async getEgresados(year, month) {
+        const mesKey = `${year}-${String(month).padStart(2, '0')}`;
+        return this._getListByMes(STORE_EGRESADOS, mesKey);
+      }
+
+      async addEgresado(year, month, data) {
+        const list = await this.getEgresados(year, month);
+        if (list.length >= 5) {
+          throw new Error('Límite mensual alcanzado: Máximo 5 estudiantes egresados permitidos en la planilla oficial.');
+        }
+        data.mes = `${year}-${String(month).padStart(2, '0')}`;
+        return this._addItem(STORE_EGRESADOS, data);
+      }
+
+      async deleteEgresado(id) {
+        return this._deleteItem(STORE_EGRESADOS, id);
+      }
+
+      /* REPITIENTES (MÁX 5 AL MES) */
+      async getRepitientes(year, month) {
+        const mesKey = `${year}-${String(month).padStart(2, '0')}`;
+        return this._getListByMes(STORE_REPITIENTES, mesKey);
+      }
+
+      async addRepitiente(year, month, data) {
+        const list = await this.getRepitientes(year, month);
+        if (list.length >= 5) {
+          throw new Error('Límite mensual alcanzado: Máximo 5 estudiantes repitientes permitidos en la planilla oficial.');
+        }
+        data.mes = `${year}-${String(month).padStart(2, '0')}`;
+        return this._addItem(STORE_REPITIENTES, data);
+      }
+
+      async deleteRepitiente(id) {
+        return this._deleteItem(STORE_REPITIENTES, id);
+      }
+
+      /* HELPERS DE TABLAS */
+      async _getListByMes(storeName, mesKey) {
+        await this.initPromise;
+        if (this.db) {
+          return new Promise((resolve) => {
+            const tx = this.db.transaction([storeName], 'readonly');
+            const store = tx.objectStore(storeName);
+            const index = store.index('mes');
+            const req = index.getAll(mesKey);
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          });
+        } else {
+          const all = this._getLS(storeName);
+          return (all[mesKey] || []);
+        }
+      }
+
+      async _addItem(storeName, item) {
+        await this.initPromise;
+        if (this.db) {
+          return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([storeName], 'readwrite');
+            const req = tx.objectStore(storeName).add(item);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+        } else {
+          const all = this._getLS(storeName);
+          if (!all[item.mes]) all[item.mes] = [];
+          item.id = Date.now() + Math.random();
+          all[item.mes].push(item);
+          localStorage.setItem(storeName, JSON.stringify(all));
+          return item.id;
+        }
+      }
+
+      async _deleteItem(storeName, id) {
+        await this.initPromise;
+        if (this.db) {
+          return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([storeName], 'readwrite');
+            const req = tx.objectStore(storeName).delete(Number(id));
+            req.onsuccess = () => resolve(true);
+            req.onerror = () => reject(req.error);
+          });
+        } else {
+          const all = this._getLS(storeName);
+          for (const mes in all) {
+            all[mes] = all[mes].filter(x => x.id != id);
+          }
+          localStorage.setItem(storeName, JSON.stringify(all));
+          return true;
+        }
+      }
+
+      /* CONFIGURACIÓN Y EDADES */
+      async saveConfig(cfg) {
+        localStorage.setItem('asistencia_mppe_config', JSON.stringify(cfg));
+        return cfg;
+      }
+
+      async getConfig() {
+        const raw = localStorage.getItem('asistencia_mppe_config');
+        if (raw) {
+          try { return JSON.parse(raw); } catch (e) {}
+        }
+        return {
+          schoolName: 'U.E.N. "República de Indonesia"',
+          deaCode: 'OD 17441503',
+          schoolLocation: 'Valle Arriba - Baruta',
+          schoolRif: 'J-31685926-6',
+          teacherName: '',
+          grade: '',
+          section: '',
+          schoolYear: '2025-2026',
+          diasHabiles: 20,
+          matriculaV: 0,
+          matriculaH: 0,
+          extranjerosV: 0,
+          extranjerosH: 0,
+          edades: [
+            { edad: 3, v: 0, h: 0 },
+            { edad: 4, v: 0, h: 0 },
+            { edad: 5, v: 0, h: 0 },
+            { edad: 6, v: 0, h: 0 },
+            { edad: 7, v: 0, h: 0 },
+            { edad: 8, v: 0, h: 0 }
+          ]
+        };
+      }
+
+      async clearConfig() {
+        localStorage.removeItem('asistencia_mppe_config');
+      }
+
+      _getLS(store) {
+        try {
+          const r = localStorage.getItem(store);
+          return r ? JSON.parse(r) : {};
+        } catch (e) { return {}; }
+      }
+    }
+
+    window.attendanceDB = new AttendanceDB();
+
+    /* ========================================================
+       2. EXPORTADOR A EXCEL (Idéntico a la planilla MPPE)
+       ======================================================== */
+    window.mppeExcelExport = {
+      generateReport: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
+        const fileName = `RESUMEN_ESTADISTICO_${monthName.toUpperCase()}_${year}.xls`;
+
+        // Procesar filas de días de clase (Lunes a Viernes del mes seleccionado)
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+        let rowsDailyHtml = '';
+        const dayLetters = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+        let sumV = 0, sumH = 0, sumT = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateObj = new Date(year, monthNum - 1, d);
+          const dayWeek = dateObj.getDay();
+          if (dayWeek === 0 || dayWeek === 6) continue; // Excluir fin de semana
+
+          const dayLetter = dayLetters[dayWeek];
+          const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const formattedDate = `${String(d).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}`;
+
+          const record = dailyRecords.find(r => r.date === dateStr);
+
+          if (record && record.isNoClass) {
+            // DÍA SIN CLASES: FUSIONAR 3 CELDAS (V, H, T) CON EL MOTIVO
+            let reasonText = (record.noClassReason || 'Sin actividad escolar').trim();
+            // Truncar si es muy largo para no romper la estética
+            if (reasonText.length > 45) {
+              reasonText = reasonText.substring(0, 42) + '...';
+            }
+            rowsDailyHtml += `
+              <tr style="height: 22px;">
+                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${dayLetter}</td>
+                <td style="border: 1px solid black; text-align: center;">${formattedDate}</td>
+                <td colspan="3" style="border: 1px solid black; text-align: center; font-size: 10px; font-style: italic; background-color: #fee2e2; color: #991b1b; padding: 2px;">${reasonText}</td>
+              </tr>
+            `;
+          } else if (record) {
+            const v = record.ninos || 0;
+            const h = record.ninas || 0;
+            const t = v + h;
+            sumV += v; sumH += h; sumT += t;
+            rowsDailyHtml += `
+              <tr style="height: 22px;">
+                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${dayLetter}</td>
+                <td style="border: 1px solid black; text-align: center;">${formattedDate}</td>
+                <td style="border: 1px solid black; text-align: center;">${v}</td>
+                <td style="border: 1px solid black; text-align: center;">${h}</td>
+                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${t}</td>
+              </tr>
+            `;
+          } else {
+            // Día lectivo sin registro aún
+            rowsDailyHtml += `
+              <tr style="height: 22px;">
+                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${dayLetter}</td>
+                <td style="border: 1px solid black; text-align: center;">${formattedDate}</td>
+                <td style="border: 1px solid black; text-align: center;"></td>
+                <td style="border: 1px solid black; text-align: center;"></td>
+                <td style="border: 1px solid black; text-align: center;"></td>
+              </tr>
+            `;
+          }
+        }
+
+        // Fila Total
+        rowsDailyHtml += `
+          <tr style="height: 24px; font-weight: bold; background-color: #f1f5f9;">
+            <td colspan="2" style="border: 1px solid black; text-align: center;">Total</td>
+            <td style="border: 1px solid black; text-align: center;">${sumV}</td>
+            <td style="border: 1px solid black; text-align: center;">${sumH}</td>
+            <td style="border: 1px solid black; text-align: center;">${sumT}</td>
+          </tr>
+        `;
+
+        // Cuadro ASISTENCIA (Promedio y Porcentaje)
+        const totalDiasConClase = summary.diasConClase || (sumT > 0 ? 1 : 0);
+        const promV = totalDiasConClase > 0 ? (sumV / totalDiasConClase).toFixed(1) : '0';
+        const promH = totalDiasConClase > 0 ? (sumH / totalDiasConClase).toFixed(1) : '0';
+        const promT = totalDiasConClase > 0 ? (sumT / totalDiasConClase).toFixed(1) : '0';
+
+        // Movimientos
+        const matIniV = Number(cfg.matriculaV || 0);
+        const matIniH = Number(cfg.matriculaH || 0);
+        const matIniT = matIniV + matIniH;
+
+        const ingV = ingresados.filter(x => x.genero === 'V').length;
+        const ingH = ingresados.filter(x => x.genero === 'H').length;
+        const ingT = ingV + ingH;
+
+        const extV = Number(cfg.extranjerosV || 0);
+        const extH = Number(cfg.extranjerosH || 0);
+        const extT = extV + extH;
+
+        const egV = egresados.filter(x => x.genero === 'V').length;
+        const egH = egresados.filter(x => x.genero === 'H').length;
+        const egT = egV + egH;
+
+        const matFinV = Math.max(0, matIniV + ingV - egV);
+        const matFinH = Math.max(0, matIniH + ingH - egH);
+        const matFinT = matFinV + matFinH;
+
+        const diasHabiles = Number(cfg.diasHabiles || 20);
+        const porcV = (matFinV > 0 && diasHabiles > 0) ? ((sumV / (matFinV * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+        const porcH = (matFinH > 0 && diasHabiles > 0) ? ((sumH / (matFinH * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+        const porcT = (matFinT > 0 && diasHabiles > 0) ? ((sumT / (matFinT * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+
+        // Cuadro Ingresados (Mínimo 3, Máximo 5)
+        let rowsIngresados = '';
+        for (let i = 0; i < Math.max(3, Math.min(5, ingresados.length)); i++) {
+          const item = ingresados[i] || {};
+          rowsIngresados += `
+            <tr style="height: 20px;">
+              <td style="border: 1px solid black; padding-left: 4px;">${item.nombreApellido || ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${item.genero || ''}</td>
+              <td style="border: 1px solid black; padding-left: 4px;">${item.plantelProcedencia || ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : ''}</td>
+            </tr>
+          `;
+        }
+
+        // Cuadro Egresados (Mínimo 3, Máximo 5)
+        let rowsEgresados = '';
+        for (let i = 0; i < Math.max(3, Math.min(5, egresados.length)); i++) {
+          const item = egresados[i] || {};
+          rowsEgresados += `
+            <tr style="height: 20px;">
+              <td style="border: 1px solid black; padding-left: 4px;">${item.nombreApellido || ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${item.genero || ''}</td>
+              <td style="border: 1px solid black; padding-left: 4px;">${item.plantelAceptacion || ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : ''}</td>
+            </tr>
+          `;
+        }
+
+        // Cuadro Repitientes (Mínimo 3, Máximo 5)
+        let rowsRepitientes = '';
+        for (let i = 0; i < Math.max(3, Math.min(5, repitientes.length)); i++) {
+          const item = repitientes[i] || {};
+          const v1 = (item.condicion === '1') ? 'X' : '';
+          const v2 = (item.condicion === '2') ? 'X' : '';
+          const v3 = (item.condicion === '3') ? 'X' : '';
+          rowsRepitientes += `
+            <tr style="height: 20px;">
+              <td style="border: 1px solid black; padding-left: 4px;">${item.nombreApellido || ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${item.edad || ''}</td>
+              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${v1}</td>
+              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${v2}</td>
+              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${v3}</td>
+            </tr>
+          `;
+        }
+
+        // Cuadro Edades (Dividido en dos columnas de edades)
+        const edadesList = cfg.edades || [];
+        const half = Math.ceil(edadesList.length / 2);
+        let rowsEdades = '';
+        let totalEdadesV = 0, totalEdadesH = 0, totalEdadesT = 0;
+
+        for (let i = 0; i < half; i++) {
+          const e1 = edadesList[i] || {};
+          const e2 = edadesList[i + half] || {};
+
+          const v1 = Number(e1.v || 0), h1 = Number(e1.h || 0), t1 = v1 + h1;
+          const v2 = Number(e2.v || 0), h2 = Number(e2.h || 0), t2 = v2 + h2;
+
+          if (e1.edad !== undefined) { totalEdadesV += v1; totalEdadesH += h1; totalEdadesT += t1; }
+          if (e2.edad !== undefined) { totalEdadesV += v2; totalEdadesH += h2; totalEdadesT += t2; }
+
+          rowsEdades += `
+            <tr style="height: 19px;">
+              <td style="border: 1px solid black; text-align: center; font-weight: bold;">${e1.edad !== undefined ? e1.edad : ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${e1.edad !== undefined ? v1 : ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${e1.edad !== undefined ? h1 : ''}</td>
+              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${e1.edad !== undefined ? t1 : ''}</td>
+              
+              <td style="border: 1px solid black; text-align: center; font-weight: bold;">${e2.edad !== undefined ? e2.edad : ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${e2.edad !== undefined ? v2 : ''}</td>
+              <td style="border: 1px solid black; text-align: center;">${e2.edad !== undefined ? h2 : ''}</td>
+              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${e2.edad !== undefined ? t2 : ''}</td>
+            </tr>
+          `;
+        }
+
+        const template = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+            <style>
+              body { font-family: 'Arial', sans-serif; font-size: 11px; }
+              table { border-collapse: collapse; }
+              .header-table td { font-size: 10px; }
+              .title-main { font-size: 14px; font-weight: bold; text-align: center; padding: 6px; }
+              .sub-title-table { width: 100%; margin-bottom: 8px; font-size: 11px; font-weight: bold; }
+              .table-section-title { background-color: #f1f5f9; font-weight: bold; text-align: center; border: 1px solid black; font-size: 11px; }
+              .th-cell { border: 1px solid black; text-align: center; font-weight: bold; background-color: #f8fafc; font-size: 10px; }
+            </style>
+          </head>
+          <body>
+            <!-- MEMBRETE OFICIAL VENEZUELA MPPE -->
+            <table style="width: 100%; margin-bottom: 6px;">
+              <tr>
+                <td style="width: 25%; font-size: 10px; font-weight: bold; vertical-align: top;">
+                  Ministerio del Poder Popular para la<br>
+                  <span style="font-size: 14px;">EDUCACIÓN</span>
+                </td>
+                <td style="width: 50%; text-align: center; font-size: 10px; vertical-align: top;">
+                  República Bolivariana de Venezuela<br>
+                  Ministerio del Poder Popular para la Educación<br>
+                  <strong>${cfg.schoolName || 'U.E.N. República de Indonesia'}</strong><br>
+                  Código DEA: ${cfg.deaCode || 'OD 17441503'} - RIF: ${cfg.schoolRif || 'J-31685926-6'}<br>
+                  ${cfg.schoolLocation || 'Valle Arriba - Baruta'}
+                </td>
+                <td style="width: 25%; text-align: right; vertical-align: top; font-weight: bold; font-size: 10px;">
+                  [ MPPE ]
+                </td>
+              </tr>
+            </table>
+
+            <div class="title-main">RESUMEN ESTADISTICO MENSUAL DEL GRADO</div>
+
+            <table class="sub-title-table">
+              <tr>
+                <td><strong>MES:</strong> ${monthName.toUpperCase()}</td>
+                <td><strong>DIAS HÁBILES:</strong> ${diasHabiles}</td>
+                <td><strong>GRADO:</strong> ${cfg.grade || ''}</td>
+                <td><strong>SECCIÓN:</strong> ${cfg.section || ''}</td>
+              </tr>
+              <tr>
+                <td colspan="2"><strong>DOCENTE:</strong> ${cfg.teacherName || ''}</td>
+                <td colspan="2"><strong>AÑO ESCOLAR:</strong> ${cfg.schoolYear || '2025-2026'}</td>
+              </tr>
+            </table>
+
+            <!-- CUERPO PRINCIPAL EN 2 COLUMNAS (TABLA MAESTRA) -->
+            <table style="width: 100%;">
+              <tr style="vertical-align: top;">
+                
+                <!-- COLUMNA IZQUIERDA: ASISTENCIA DIARIA -->
+                <td style="width: 44%; padding-right: 12px;">
+                  <table style="width: 100%;">
+                    <thead>
+                      <tr style="height: 22px;">
+                        <th class="th-cell" style="width: 32px;">DIA</th>
+                        <th class="th-cell" style="width: 55px;">FECHA</th>
+                        <th class="th-cell" style="width: 38px;">V</th>
+                        <th class="th-cell" style="width: 38px;">H</th>
+                        <th class="th-cell" style="width: 42px;">T</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${rowsDailyHtml}
+                    </tbody>
+                  </table>
+
+                  <br>
+                  <!-- CUADRO ASISTENCIA -->
+                  <table style="width: 100%;">
+                    <thead>
+                      <tr>
+                        <th colspan="4" class="table-section-title">ASISTENCIA</th>
+                      </tr>
+                      <tr style="height: 20px;">
+                        <th class="th-cell">GENERO</th>
+                        <th class="th-cell" style="width: 42px;">V</th>
+                        <th class="th-cell" style="width: 42px;">H</th>
+                        <th class="th-cell" style="width: 48px;">T</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="height: 21px;">
+                        <td style="border: 1px solid black; font-weight: bold; padding-left: 6px;">Promedio</td>
+                        <td style="border: 1px solid black; text-align: center;">${promV}</td>
+                        <td style="border: 1px solid black; text-align: center;">${promH}</td>
+                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${promT}</td>
+                      </tr>
+                      <tr style="height: 21px;">
+                        <td style="border: 1px solid black; font-weight: bold; padding-left: 6px;">Porcentaje</td>
+                        <td style="border: 1px solid black; text-align: center;">${porcV}</td>
+                        <td style="border: 1px solid black; text-align: center;">${porcH}</td>
+                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${porcT}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+
+                <!-- COLUMNA DERECHA: MOVIMIENTOS, INGRESADOS, EGRESADOS, REPITIENTES Y EDADES -->
+                <td style="width: 56%;">
+                  
+                  <!-- 1. MOVIMIENTOS -->
+                  <table style="width: 100%; margin-bottom: 8px;">
+                    <thead>
+                      <tr style="height: 20px;">
+                        <th class="table-section-title" style="text-align: left; padding-left: 6px;">MOVIMIENTOS</th>
+                        <th class="th-cell" style="width: 36px;">V</th>
+                        <th class="th-cell" style="width: 36px;">H</th>
+                        <th class="th-cell" style="width: 40px;">T</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="height: 20px;">
+                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES MATRICULADOS EN 1º DIA DEL MES</td>
+                        <td style="border: 1px solid black; text-align: center;">${matIniV}</td>
+                        <td style="border: 1px solid black; text-align: center;">${matIniH}</td>
+                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${matIniT}</td>
+                      </tr>
+                      <tr style="height: 20px;">
+                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES INGRESADOS DURANTE EL MES</td>
+                        <td style="border: 1px solid black; text-align: center;">${ingV}</td>
+                        <td style="border: 1px solid black; text-align: center;">${ingH}</td>
+                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${ingT}</td>
+                      </tr>
+                      <tr style="height: 20px;">
+                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES EXTRANJEROS MATRICULADOS</td>
+                        <td style="border: 1px solid black; text-align: center;">${extV}</td>
+                        <td style="border: 1px solid black; text-align: center;">${extH}</td>
+                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${extT}</td>
+                      </tr>
+                      <tr style="height: 20px;">
+                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES RETIRADOS DURANTE EL MES</td>
+                        <td style="border: 1px solid black; text-align: center;">${egV}</td>
+                        <td style="border: 1px solid black; text-align: center;">${egH}</td>
+                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${egT}</td>
+                      </tr>
+                      <tr style="height: 20px; font-weight: bold; background-color: #f8fafc;">
+                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES MATRICULADO FIN DEL MES</td>
+                        <td style="border: 1px solid black; text-align: center;">${matFinV}</td>
+                        <td style="border: 1px solid black; text-align: center;">${matFinH}</td>
+                        <td style="border: 1px solid black; text-align: center;">${matFinT}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <!-- 2. ESTUDIANTES INGRESADOS/AS -->
+                  <table style="width: 100%; margin-bottom: 8px;">
+                    <thead>
+                      <tr><th colspan="4" class="table-section-title">ESTUDIANTES INGRESADOS/AS</th></tr>
+                      <tr style="height: 19px;">
+                        <th class="th-cell">Nombre Y Apellido</th>
+                        <th class="th-cell" style="width: 35px;">Gen</th>
+                        <th class="th-cell">Plantel de Procedencia</th>
+                        <th class="th-cell" style="width: 65px;">Fecha/In</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${rowsIngresados}
+                    </tbody>
+                  </table>
+
+                  <!-- 3. ESTUDIANTES EGRESADOS/AS -->
+                  <table style="width: 100%; margin-bottom: 8px;">
+                    <thead>
+                      <tr><th colspan="4" class="table-section-title">ESTUDIANTES EGRESADOS/AS</th></tr>
+                      <tr style="height: 19px;">
+                        <th class="th-cell">Nombre y Apellido</th>
+                        <th class="th-cell" style="width: 35px;">Gen</th>
+                        <th class="th-cell">Plantel aceptación de cupo</th>
+                        <th class="th-cell" style="width: 65px;">Fecha/R</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${rowsEgresados}
+                    </tbody>
+                  </table>
+
+                  <!-- 4. ESTUDIANTES REPITIENTES -->
+                  <table style="width: 100%; margin-bottom: 8px;">
+                    <thead>
+                      <tr><th colspan="5" class="table-section-title">ESTUDIANTES REPITIENTES</th></tr>
+                      <tr style="height: 19px;">
+                        <th class="th-cell">Nombre y Apellido</th>
+                        <th class="th-cell" style="width: 38px;">Edad</th>
+                        <th class="th-cell" style="width: 44px;">1º vez</th>
+                        <th class="th-cell" style="width: 44px;">2º vez</th>
+                        <th class="th-cell" style="width: 44px;">3º vez</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${rowsRepitientes}
+                    </tbody>
+                  </table>
+
+                  <!-- 5. CLASIFICACIÓN POR EDAD Y GENERO -->
+                  <table style="width: 100%;">
+                    <thead>
+                      <tr><th colspan="8" class="table-section-title">CLASIFICACIÓN POR EDAD Y GENERO</th></tr>
+                      <tr style="height: 18px;">
+                        <th class="th-cell" style="width: 35px;">Edad</th>
+                        <th class="th-cell" style="width: 25px;">V</th>
+                        <th class="th-cell" style="width: 25px;">H</th>
+                        <th class="th-cell" style="width: 35px;">Total</th>
+                        <th class="th-cell" style="width: 35px;">Edad</th>
+                        <th class="th-cell" style="width: 25px;">V</th>
+                        <th class="th-cell" style="width: 25px;">H</th>
+                        <th class="th-cell" style="width: 35px;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${rowsEdades}
+                    </tbody>
+                  </table>
+
+                </td>
+              </tr>
+            </table>
+
+            <br>
+            <!-- PIE DE PÁGINA (FECHA DE ENTREGA Y FIRMAS EN BLANCO) -->
+            <table style="width: 100%; margin-top: 25px;">
+              <tr>
+                <td colspan="2" style="font-size: 11px; padding-bottom: 25px;">
+                  <strong>Fecha de entrega:</strong> _____ / _____ / _________
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                  ____________________________________<br>
+                  <strong>Firma del (de la) Docente</strong>
+                </td>
+                <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                  ____________________________________<br>
+                  <strong>Firma Directivo</strong>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob(['\uFEFF' + template], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    };
+
+    /* ========================================================
+       3. EXPORTADOR A PDF (Impresión idéntica a la hoja escaneada)
+       ======================================================== */
+    window.mppePdfExport = {
+      generateAndPrintPDF: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
+        const reportWindow = window.open('', '_blank');
+
+        // Calcular días y datos
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+        let rowsDailyHtml = '';
+        const dayLetters = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+        let sumV = 0, sumH = 0, sumT = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateObj = new Date(year, monthNum - 1, d);
+          const dayWeek = dateObj.getDay();
+          if (dayWeek === 0 || dayWeek === 6) continue;
+
+          const dayLetter = dayLetters[dayWeek];
+          const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const formattedDate = `${String(d).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}`;
+
+          const record = dailyRecords.find(r => r.date === dateStr);
+
+          if (record && record.isNoClass) {
+            let reasonText = (record.noClassReason || 'Sin actividad escolar').trim();
+            if (reasonText.length > 38) reasonText = reasonText.substring(0, 35) + '...';
+            rowsDailyHtml += `
+              <tr style="height: 18px;">
+                <td class="c-border text-center font-bold">${dayLetter}</td>
+                <td class="c-border text-center">${formattedDate}</td>
+                <td colspan="3" class="c-border text-center" style="font-size: 8px; font-style: italic; background:#fee2e2; color:#991b1b; padding:1px 2px;">${reasonText}</td>
+              </tr>
+            `;
+          } else if (record) {
+            const v = record.ninos || 0;
+            const h = record.ninas || 0;
+            const t = v + h;
+            sumV += v; sumH += h; sumT += t;
+            rowsDailyHtml += `
+              <tr style="height: 18px;">
+                <td class="c-border text-center font-bold">${dayLetter}</td>
+                <td class="c-border text-center">${formattedDate}</td>
+                <td class="c-border text-center">${v}</td>
+                <td class="c-border text-center">${h}</td>
+                <td class="c-border text-center font-bold">${t}</td>
+              </tr>
+            `;
+          } else {
+            rowsDailyHtml += `
+              <tr style="height: 18px;">
+                <td class="c-border text-center font-bold">${dayLetter}</td>
+                <td class="c-border text-center">${formattedDate}</td>
+                <td class="c-border text-center"></td>
+                <td class="c-border text-center"></td>
+                <td class="c-border text-center"></td>
+              </tr>
+            `;
+          }
+        }
+
+        // Fila Total
+        rowsDailyHtml += `
+          <tr style="height: 20px; font-weight: bold; background-color: #f1f5f9;">
+            <td colspan="2" class="c-border text-center">Total</td>
+            <td class="c-border text-center">${sumV}</td>
+            <td class="c-border text-center">${sumH}</td>
+            <td class="c-border text-center">${sumT}</td>
+          </tr>
+        `;
+
+        const totalDiasConClase = summary.diasConClase || (sumT > 0 ? 1 : 0);
+        const promV = totalDiasConClase > 0 ? (sumV / totalDiasConClase).toFixed(1) : '0';
+        const promH = totalDiasConClase > 0 ? (sumH / totalDiasConClase).toFixed(1) : '0';
+        const promT = totalDiasConClase > 0 ? (sumT / totalDiasConClase).toFixed(1) : '0';
+
+        const matIniV = Number(cfg.matriculaV || 0);
+        const matIniH = Number(cfg.matriculaH || 0);
+        const matIniT = matIniV + matIniH;
+
+        const ingV = ingresados.filter(x => x.genero === 'V').length;
+        const ingH = ingresados.filter(x => x.genero === 'H').length;
+        const ingT = ingV + ingH;
+
+        const extV = Number(cfg.extranjerosV || 0);
+        const extH = Number(cfg.extranjerosH || 0);
+        const extT = extV + extH;
+
+        const egV = egresados.filter(x => x.genero === 'V').length;
+        const egH = egresados.filter(x => x.genero === 'H').length;
+        const egT = egV + egH;
+
+        const matFinV = Math.max(0, matIniV + ingV - egV);
+        const matFinH = Math.max(0, matIniH + ingH - egH);
+        const matFinT = matFinV + matFinH;
+
+        const diasHabiles = Number(cfg.diasHabiles || 20);
+        const porcV = (matFinV > 0 && diasHabiles > 0) ? ((sumV / (matFinV * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+        const porcH = (matFinH > 0 && diasHabiles > 0) ? ((sumH / (matFinH * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+        const porcT = (matFinT > 0 && diasHabiles > 0) ? ((sumT / (matFinT * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+
+        // Ingresados (Mínimo 3, Máximo 5)
+        let rowsIngresados = '';
+        for (let i = 0; i < Math.max(3, Math.min(5, ingresados.length)); i++) {
+          const item = ingresados[i] || {};
+          rowsIngresados += `
+            <tr style="height: 18px;">
+              <td class="c-border pl-1">${item.nombreApellido || ''}</td>
+              <td class="c-border text-center">${item.genero || ''}</td>
+              <td class="c-border pl-1">${item.plantelProcedencia || ''}</td>
+              <td class="c-border text-center">${item.fecha ? item.fecha.split('-').reverse().join('/') : ''}</td>
+            </tr>
+          `;
+        }
+
+        // Egresados (Mínimo 3, Máximo 5)
+        let rowsEgresados = '';
+        for (let i = 0; i < Math.max(3, Math.min(5, egresados.length)); i++) {
+          const item = egresados[i] || {};
+          rowsEgresados += `
+            <tr style="height: 18px;">
+              <td class="c-border pl-1">${item.nombreApellido || ''}</td>
+              <td class="c-border text-center">${item.genero || ''}</td>
+              <td class="c-border pl-1">${item.plantelAceptacion || ''}</td>
+              <td class="c-border text-center">${item.fecha ? item.fecha.split('-').reverse().join('/') : ''}</td>
+            </tr>
+          `;
+        }
+
+        // Repitientes (Mínimo 3, Máximo 5)
+        let rowsRepitientes = '';
+        for (let i = 0; i < Math.max(3, Math.min(5, repitientes.length)); i++) {
+          const item = repitientes[i] || {};
+          const v1 = (item.condicion === '1') ? 'X' : '';
+          const v2 = (item.condicion === '2') ? 'X' : '';
+          const v3 = (item.condicion === '3') ? 'X' : '';
+          rowsRepitientes += `
+            <tr style="height: 18px;">
+              <td class="c-border pl-1">${item.nombreApellido || ''}</td>
+              <td class="c-border text-center">${item.edad || ''}</td>
+              <td class="c-border text-center font-bold">${v1}</td>
+              <td class="c-border text-center font-bold">${v2}</td>
+              <td class="c-border text-center font-bold">${v3}</td>
+            </tr>
+          `;
+        }
+
+        // Edades
+        const edadesList = cfg.edades || [];
+        const half = Math.ceil(edadesList.length / 2);
+        let rowsEdades = '';
+
+        for (let i = 0; i < half; i++) {
+          const e1 = edadesList[i] || {};
+          const e2 = edadesList[i + half] || {};
+
+          const v1 = Number(e1.v || 0), h1 = Number(e1.h || 0), t1 = v1 + h1;
+          const v2 = Number(e2.v || 0), h2 = Number(e2.h || 0), t2 = v2 + h2;
+
+          rowsEdades += `
+            <tr style="height: 16px;">
+              <td class="c-border text-center font-bold">${e1.edad !== undefined ? e1.edad : ''}</td>
+              <td class="c-border text-center">${e1.edad !== undefined ? v1 : ''}</td>
+              <td class="c-border text-center">${e1.edad !== undefined ? h1 : ''}</td>
+              <td class="c-border text-center font-bold">${e1.edad !== undefined ? t1 : ''}</td>
+              
+              <td class="c-border text-center font-bold">${e2.edad !== undefined ? e2.edad : ''}</td>
+              <td class="c-border text-center">${e2.edad !== undefined ? v2 : ''}</td>
+              <td class="c-border text-center">${e2.edad !== undefined ? h2 : ''}</td>
+              <td class="c-border text-center font-bold">${e2.edad !== undefined ? t2 : ''}</td>
+            </tr>
+          `;
+        }
+
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+            <meta charset="UTF-8">
+            <title>RESUMEN_ESTADISTICO_${monthName.toUpperCase()}_${year}</title>
+            <style>
+              @page { size: letter portrait; margin: 8mm 10mm; }
+              body { font-family: 'Arial', sans-serif; font-size: 9.5px; color: #000; line-height: 1.2; margin: 0; padding: 0; }
+              table { border-collapse: collapse; width: 100%; }
+              .c-border { border: 1px solid #000; }
+              .text-center { text-align: center; }
+              .font-bold { font-weight: bold; }
+              .pl-1 { padding-left: 4px; }
+              .th-title { background: #f1f5f9; font-weight: bold; text-align: center; border: 1px solid #000; font-size: 9.5px; padding: 2px; }
+              .th-cell { border: 1px solid #000; text-align: center; font-weight: bold; font-size: 8.5px; padding: 2px; background: #fafafa; }
+              .no-print { display: block; }
+              @media print {
+                .no-print { display: none !important; }
+                body { padding: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="no-print" style="background:#1e40af; color:white; padding:10px; text-align:center; margin-bottom:12px; border-radius:6px;">
+              <strong>Previsualización de Planilla Oficial MPPE</strong><br>
+              <button onclick="window.print()" style="background:#22c55e; color:white; border:none; padding:7px 16px; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:5px; font-size:12px;">
+                🖨️ Descargar o Imprimir en PDF
+              </button>
+            </div>
+
+            <!-- MEMBRETE -->
+            <table style="margin-bottom: 4px;">
+              <tr>
+                <td style="width: 25%; font-size: 8.5px; font-weight: bold; vertical-align: top;">
+                  Ministerio del Poder Popular para la<br>
+                  <span style="font-size: 13px;">EDUCACIÓN</span>
+                </td>
+                <td style="width: 50%; text-align: center; font-size: 9px; vertical-align: top;">
+                  República Bolivariana de Venezuela<br>
+                  Ministerio del Poder Popular para la Educación<br>
+                  <strong>${cfg.schoolName || 'U.E.N. República de Indonesia'}</strong><br>
+                  Código DEA: ${cfg.deaCode || 'OD 17441503'} - RIF: ${cfg.schoolRif || 'J-31685926-6'}<br>
+                  ${cfg.schoolLocation || 'Valle Arriba - Baruta'}
+                </td>
+                <td style="width: 25%; text-align: right; vertical-align: top; font-weight: bold; font-size: 9px;">
+                  [ U.E.N ]
+                </td>
+              </tr>
+            </table>
+
+            <div style="font-size: 13px; font-weight: bold; text-align: center; margin: 4px 0 6px 0; letter-spacing: 0.5px;">
+              RESUMEN ESTADISTICO MENSUAL DEL GRADO
+            </div>
+
+            <table style="margin-bottom: 6px; font-size: 9.5px;">
+              <tr>
+                <td><strong>MES:</strong> ${monthName.toUpperCase()}</td>
+                <td><strong>DIAS HÁBILES:</strong> ${diasHabiles}</td>
+                <td><strong>GRADO:</strong> ${cfg.grade || ''}</td>
+                <td><strong>SECCIÓN:</strong> ${cfg.section || ''}</td>
+              </tr>
+              <tr>
+                <td colspan="2"><strong>DOCENTE:</strong> ${cfg.teacherName || ''}</td>
+                <td colspan="2"><strong>AÑO ESCOLAR:</strong> ${cfg.schoolYear || '2025-2026'}</td>
+              </tr>
+            </table>
+
+            <!-- ESTRUCTURA EN 2 COLUMNAS -->
+            <table>
+              <tr style="vertical-align: top;">
+                <!-- COLUMNA IZQUIERDA -->
+                <td style="width: 44%; padding-right: 8px;">
+                  <table>
+                    <thead>
+                      <tr style="height: 18px;">
+                        <th class="th-cell" style="width: 24px;">DIA</th>
+                        <th class="th-cell" style="width: 45px;">FECHA</th>
+                        <th class="th-cell" style="width: 32px;">V</th>
+                        <th class="th-cell" style="width: 32px;">H</th>
+                        <th class="th-cell" style="width: 34px;">T</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${rowsDailyHtml}
+                    </tbody>
+                  </table>
+
+                  <div style="margin-top: 8px;"></div>
+
+                  <!-- CUADRO ASISTENCIA -->
+                  <table>
+                    <thead>
+                      <tr><th colspan="4" class="th-title">ASISTENCIA</th></tr>
+                      <tr style="height: 17px;">
+                        <th class="th-cell">GENERO</th>
+                        <th class="th-cell" style="width: 35px;">V</th>
+                        <th class="th-cell" style="width: 35px;">H</th>
+                        <th class="th-cell" style="width: 38px;">T</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="height: 18px;">
+                        <td class="c-border pl-1 font-bold">Promedio</td>
+                        <td class="c-border text-center">${promV}</td>
+                        <td class="c-border text-center">${promH}</td>
+                        <td class="c-border text-center font-bold">${promT}</td>
+                      </tr>
+                      <tr style="height: 18px;">
+                        <td class="c-border pl-1 font-bold">Porcentaje</td>
+                        <td class="c-border text-center">${porcV}</td>
+                        <td class="c-border text-center">${porcH}</td>
+                        <td class="c-border text-center font-bold">${porcT}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+
+                <!-- COLUMNA DERECHA -->
+                <td style="width: 56%;">
+                  <!-- 1. MOVIMIENTOS -->
+                  <table style="margin-bottom: 6px;">
+                    <thead>
+                      <tr style="height: 17px;">
+                        <th class="th-title" style="text-align: left; padding-left: 4px;">MOVIMIENTOS</th>
+                        <th class="th-cell" style="width: 30px;">V</th>
+                        <th class="th-cell" style="width: 30px;">H</th>
+                        <th class="th-cell" style="width: 32px;">T</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="height: 17px;">
+                        <td class="c-border pl-1" style="font-size: 8.5px;">ESTUDIANTES MATRICULADOS EN 1º DIA DEL MES</td>
+                        <td class="c-border text-center">${matIniV}</td>
+                        <td class="c-border text-center">${matIniH}</td>
+                        <td class="c-border text-center font-bold">${matIniT}</td>
+                      </tr>
+                      <tr style="height: 17px;">
+                        <td class="c-border pl-1" style="font-size: 8.5px;">ESTUDIANTES INGRESADOS DURANTE EL MES</td>
+                        <td class="c-border text-center">${ingV}</td>
+                        <td class="c-border text-center">${ingH}</td>
+                        <td class="c-border text-center font-bold">${ingT}</td>
+                      </tr>
+                      <tr style="height: 17px;">
+                        <td class="c-border pl-1" style="font-size: 8.5px;">ESTUDIANTES EXTRANJEROS MATRICULADOS</td>
+                        <td class="c-border text-center">${extV}</td>
+                        <td class="c-border text-center">${extH}</td>
+                        <td class="c-border text-center font-bold">${extT}</td>
+                      </tr>
+                      <tr style="height: 17px;">
+                        <td class="c-border pl-1" style="font-size: 8.5px;">ESTUDIANTES RETIRADOS DURANTE EL MES</td>
+                        <td class="c-border text-center">${egV}</td>
+                        <td class="c-border text-center">${egH}</td>
+                        <td class="c-border text-center font-bold">${egT}</td>
+                      </tr>
+                      <tr style="height: 17px; font-weight: bold; background:#f8fafc;">
+                        <td class="c-border pl-1" style="font-size: 8.5px;">ESTUDIANTES MATRICULADO FIN DEL MES</td>
+                        <td class="c-border text-center">${matFinV}</td>
+                        <td class="c-border text-center">${matFinH}</td>
+                        <td class="c-border text-center">${matFinT}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <!-- 2. INGRESADOS -->
+                  <table style="margin-bottom: 6px;">
+                    <thead>
+                      <tr><th colspan="4" class="th-title">ESTUDIANTES INGRESADOS/AS</th></tr>
+                      <tr style="height: 16px;">
+                        <th class="th-cell">Nombre Y Apellido</th>
+                        <th class="th-cell" style="width: 28px;">Gen</th>
+                        <th class="th-cell">Plantel de Procedencia</th>
+                        <th class="th-cell" style="width: 55px;">Fecha/In</th>
+                      </tr>
+                    </thead>
+                    <tbody>${rowsIngresados}</tbody>
+                  </table>
+
+                  <!-- 3. EGRESADOS -->
+                  <table style="margin-bottom: 6px;">
+                    <thead>
+                      <tr><th colspan="4" class="th-title">ESTUDIANTES EGRESADOS/AS</th></tr>
+                      <tr style="height: 16px;">
+                        <th class="th-cell">Nombre y Apellido</th>
+                        <th class="th-cell" style="width: 28px;">Gen</th>
+                        <th class="th-cell">Plantel aceptación de cupo</th>
+                        <th class="th-cell" style="width: 55px;">Fecha/R</th>
+                      </tr>
+                    </thead>
+                    <tbody>${rowsEgresados}</tbody>
+                  </table>
+
+                  <!-- 4. REPITIENTES -->
+                  <table style="margin-bottom: 6px;">
+                    <thead>
+                      <tr><th colspan="5" class="th-title">ESTUDIANTES REPITIENTES</th></tr>
+                      <tr style="height: 16px;">
+                        <th class="th-cell">Nombre y Apellido</th>
+                        <th class="th-cell" style="width: 30px;">Edad</th>
+                        <th class="th-cell" style="width: 35px;">1º vez</th>
+                        <th class="th-cell" style="width: 35px;">2º vez</th>
+                        <th class="th-cell" style="width: 35px;">3º vez</th>
+                      </tr>
+                    </thead>
+                    <tbody>${rowsRepitientes}</tbody>
+                  </table>
+
+                  <!-- 5. EDADES -->
+                  <table>
+                    <thead>
+                      <tr><th colspan="8" class="th-title">CLASIFICACIÓN POR EDAD Y GENERO</th></tr>
+                      <tr style="height: 15px;">
+                        <th class="th-cell" style="width: 26px;">Edad</th>
+                        <th class="th-cell" style="width: 20px;">V</th>
+                        <th class="th-cell" style="width: 20px;">H</th>
+                        <th class="th-cell" style="width: 26px;">Total</th>
+                        <th class="th-cell" style="width: 26px;">Edad</th>
+                        <th class="th-cell" style="width: 20px;">V</th>
+                        <th class="th-cell" style="width: 20px;">H</th>
+                        <th class="th-cell" style="width: 26px;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>${rowsEdades}</tbody>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- PIE DE PÁGINA OFICIAL EN BLANCO -->
+            <table style="margin-top: 30px;">
+              <tr>
+                <td colspan="2" style="font-size: 10px; padding-bottom: 30px;">
+                  <strong>Fecha de entrega:</strong> _____ / _____ / _________
+                </td>
+              </tr>
+              <tr>
+                <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                  ___________________________________________<br>
+                  <strong>Firma del (de la) Docente</strong>
+                </td>
+                <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                  ___________________________________________<br>
+                  <strong>Firma Directivo</strong>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
+        `;
+
+        reportWindow.document.write(htmlContent);
+        reportWindow.document.close();
+      }
+    };
+
+    /* ========================================================
+       4. CONTROLADOR PRINCIPAL DE LA APLICACIÓN
+       ======================================================== */
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Elementos de Navegación
+      const navTabs = document.querySelectorAll('.nav-item');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      // Formulario Registro Diario
+      const inputDate = document.getElementById('inputDate');
+      const btnToday = document.getElementById('btnToday');
+
+      const btnClassYes = document.getElementById('btnClassYes');
+      const btnClassNo = document.getElementById('btnClassNo');
+      const containerNoClassReason = document.getElementById('containerNoClassReason');
+      const inputNoClassReason = document.getElementById('inputNoClassReason');
+      const wordCountBadge = document.getElementById('wordCountBadge');
+      const classActiveSection = document.getElementById('classActiveSection');
+
+      const inputNinos = document.getElementById('inputNinos');
+      const inputNinas = document.getElementById('inputNinas');
+      const displayTotal = document.getElementById('displayTotal');
+      const btnMinusNinos = document.getElementById('btnMinusNinos');
+      const btnPlusNinos = document.getElementById('btnPlusNinos');
+      const btnMinusNinas = document.getElementById('btnMinusNinas');
+      const btnPlusNinas = document.getElementById('btnPlusNinas');
+
+      // Inasistentes
+      const inasistenteNombre = document.getElementById('inasistenteNombre');
+      const inasistenteApellido = document.getElementById('inasistenteApellido');
+      const inasistenteCedula = document.getElementById('inasistenteCedula');
+      const inasistenteRazon = document.getElementById('inasistenteRazon');
+      const btnAddInasistente = document.getElementById('btnAddInasistente');
+      const tbodyInasistentes = document.getElementById('tbodyInasistentes');
+      const badgeInasistentesCount = document.getElementById('badgeInasistentesCount');
+
+      // Ingresados
+      const ingresadoNombre = document.getElementById('ingresadoNombre');
+      const ingresadoGen = document.getElementById('ingresadoGen');
+      const ingresadoPlantel = document.getElementById('ingresadoPlantel');
+      const ingresadoFecha = document.getElementById('ingresadoFecha');
+      const btnAddIngresado = document.getElementById('btnAddIngresado');
+      const tbodyIngresados = document.getElementById('tbodyIngresados');
+      const badgeIngresadosCount = document.getElementById('badgeIngresadosCount');
+
+      // Egresados
+      const egresadoNombre = document.getElementById('egresadoNombre');
+      const egresadoGen = document.getElementById('egresadoGen');
+      const egresadoPlantel = document.getElementById('egresadoPlantel');
+      const egresadoFecha = document.getElementById('egresadoFecha');
+      const btnAddEgresado = document.getElementById('btnAddEgresado');
+      const tbodyEgresados = document.getElementById('tbodyEgresados');
+      const badgeEgresadosCount = document.getElementById('badgeEgresadosCount');
+
+      // Repitientes
+      const repitienteNombre = document.getElementById('repitienteNombre');
+      const repitienteEdad = document.getElementById('repitienteEdad');
+      const repitienteVez = document.getElementById('repitienteVez');
+      const btnAddRepitiente = document.getElementById('btnAddRepitiente');
+      const tbodyRepitientes = document.getElementById('tbodyRepitientes');
+      const badgeRepitientesCount = document.getElementById('badgeRepitientesCount');
+
+      const btnSaveAttendance = document.getElementById('btnSaveAttendance');
+
+      // Resumen
+      const selectMonth = document.getElementById('selectMonth');
+      const selectYear = document.getElementById('selectYear');
+      const valPromedioTotal = document.getElementById('valPromedioTotal');
+      const valPromedioNinosNinas = document.getElementById('valPromedioNinosNinas');
+      const valDiasLectivos = document.getElementById('valDiasLectivos');
+      const valDiasSinClases = document.getElementById('valDiasSinClases');
+      const valIntegradosTotal = document.getElementById('valIntegradosTotal');
+      const valRetiradosTotal = document.getElementById('valRetiradosTotal');
+      const dailyLogTableBody = document.getElementById('dailyLogTableBody');
+
+      const btnExportPDF = document.getElementById('btnExportPDF');
+      const btnExportExcel = document.getElementById('btnExportExcel');
+
+      // Modal Exportación
+      const modalExportPrompt = document.getElementById('modalExportPrompt');
+      const btnCloseExportModal = document.getElementById('btnCloseExportModal');
+      const btnConfirmExport = document.getElementById('btnConfirmExport');
+      const promptDiasHabiles = document.getElementById('promptDiasHabiles');
+      const promptMatriculaV = document.getElementById('promptMatriculaV');
+      const promptMatriculaH = document.getElementById('promptMatriculaH');
+      const promptExtranjerosV = document.getElementById('promptExtranjerosV');
+      const promptExtranjerosH = document.getElementById('promptExtranjerosH');
+      const promptAgesContainer = document.getElementById('promptAgesContainer');
+
+      // Ajustes
+      const toggleDarkMode = document.getElementById('toggleDarkMode');
+      const cfgSchoolName = document.getElementById('cfgSchoolName');
+      const cfgDeaCode = document.getElementById('cfgDeaCode');
+      const cfgSchoolRif = document.getElementById('cfgSchoolRif');
+      const cfgSchoolLocation = document.getElementById('cfgSchoolLocation');
+      const cfgTeacherName = document.getElementById('cfgTeacherName');
+      const cfgGrade = document.getElementById('cfgGrade');
+      const cfgSection = document.getElementById('cfgSection');
+      const cfgSchoolYear = document.getElementById('cfgSchoolYear');
+      const cfgDiasHabiles = document.getElementById('cfgDiasHabiles');
+      const cfgMatriculaV = document.getElementById('cfgMatriculaV');
+      const cfgMatriculaH = document.getElementById('cfgMatriculaH');
+      const cfgExtranjerosV = document.getElementById('cfgExtranjerosV');
+      const cfgExtranjerosH = document.getElementById('cfgExtranjerosH');
+      const containerAgesConfig = document.getElementById('containerAgesConfig');
+      const btnAddAgeRow = document.getElementById('btnAddAgeRow');
+      const btnSaveConfig = document.getElementById('btnSaveConfig');
+      const btnClearConfig = document.getElementById('btnClearConfig');
+
+      const btnLoadDemoData = document.getElementById('btnLoadDemoData');
+      const btnExportBackup = document.getElementById('btnExportBackup');
+      const inputImportBackup = document.getElementById('inputImportBackup');
+      const toast = document.getElementById('toast');
+
+      // Estado en memoria
+      let isNoClassState = false;
+      let currentInasistentes = [];
+      let pendingExportType = 'pdf'; // 'pdf' o 'excel'
+      let currentMonthIngresados = [];
+      let currentMonthEgresados = [];
+      let currentMonthRepitientes = [];
+      let currentMonthRecords = [];
+
+      // Inicializar fechas
+      const todayStr = new Date().toISOString().split('T')[0];
+      inputDate.value = todayStr;
+      ingresadoFecha.value = todayStr;
+      egresadoFecha.value = todayStr;
+
+      // Inicializar años
+      const curYear = new Date().getFullYear();
+      selectYear.innerHTML = '';
+      for (let y = curYear - 2; y <= curYear + 2; y++) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        selectYear.appendChild(opt);
+      }
+      selectYear.value = curYear;
+      selectMonth.value = String(new Date().getMonth() + 1).padStart(2, '0');
+
+      // Modo Oscuro
+      if (localStorage.getItem('asistencia_theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        toggleDarkMode.checked = true;
+      }
+
+      toggleDarkMode.addEventListener('change', () => {
+        if (toggleDarkMode.checked) {
+          document.body.classList.add('dark-mode');
+          localStorage.setItem('asistencia_theme', 'dark');
+        } else {
+          document.body.classList.remove('dark-mode');
+          localStorage.setItem('asistencia_theme', 'light');
+        }
+      });
+
+      // Navegación Tabs
+      navTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const target = tab.getAttribute('data-tab');
+          navTabs.forEach(t => t.classList.remove('active'));
+          tabContents.forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`tab-${target}`).classList.add('active');
+
+          if (target === 'summary') refreshMonthlySummary();
+          if (target === 'settings') loadSettingsToUI();
+        });
+      });
+
+      // Contador de palabras en el motivo
+      function updateWordCount() {
+        const text = inputNoClassReason.value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        wordCountBadge.textContent = `${words} / 20 palabras sugeridas`;
+        if (words > 20) {
+          wordCountBadge.classList.add('warn');
+        } else {
+          wordCountBadge.classList.remove('warn');
+        }
+      }
+
+      inputNoClassReason.addEventListener('input', updateWordCount);
+
+      // Selector de clases Sí / No
+      function setClassStatus(hasClasses) {
+        isNoClassState = !hasClasses;
+        if (hasClasses) {
+          btnClassYes.classList.add('active');
+          btnClassNo.classList.remove('active');
+          containerNoClassReason.style.display = 'none';
+          classActiveSection.style.display = 'block';
+        } else {
+          btnClassYes.classList.remove('active');
+          btnClassNo.classList.add('active');
+          containerNoClassReason.style.display = 'block';
+          classActiveSection.style.display = 'none';
+          updateWordCount();
+        }
+      }
+
+      btnClassYes.addEventListener('click', () => setClassStatus(true));
+      btnClassNo.addEventListener('click', () => setClassStatus(false));
+
+      // Botón Hoy
+      btnToday.addEventListener('click', () => {
+        inputDate.value = todayStr;
+        ingresadoFecha.value = todayStr;
+        egresadoFecha.value = todayStr;
+        loadDailyRecord(todayStr);
+      });
+
+      inputDate.addEventListener('change', () => {
+        ingresadoFecha.value = inputDate.value;
+        egresadoFecha.value = inputDate.value;
+        loadDailyRecord(inputDate.value);
+      });
+
+      // Sanitizar enteros positivos
+      function sanitizePos(el) {
+        let v = parseInt(el.value, 10);
+        if (isNaN(v) || v < 0) v = 0;
+        el.value = v;
+        return v;
+      }
+
+      [inputNinos, inputNinas].forEach(el => {
+        el.addEventListener('input', () => {
+          sanitizePos(el);
+          updateTotalAttendance();
+        });
+      });
+
+      btnMinusNinos.addEventListener('click', () => {
+        let v = sanitizePos(inputNinos);
+        if (v > 0) { inputNinos.value = v - 1; updateTotalAttendance(); }
+      });
+      btnPlusNinos.addEventListener('click', () => {
+        let v = sanitizePos(inputNinos);
+        inputNinos.value = v + 1; updateTotalAttendance();
+      });
+
+      btnMinusNinas.addEventListener('click', () => {
+        let v = sanitizePos(inputNinas);
+        if (v > 0) { inputNinas.value = v - 1; updateTotalAttendance(); }
+      });
+      btnPlusNinas.addEventListener('click', () => {
+        let v = sanitizePos(inputNinas);
+        inputNinas.value = v + 1; updateTotalAttendance();
+      });
+
+      function updateTotalAttendance() {
+        const v = sanitizePos(inputNinos);
+        const h = sanitizePos(inputNinas);
+        displayTotal.textContent = v + h;
+      }
+
+      /* GESTIÓN DE INASISTENTES DEL DÍA */
+      function renderInasistentesTable() {
+        tbodyInasistentes.innerHTML = '';
+        badgeInasistentesCount.textContent = `${currentInasistentes.length} alumnos`;
+
+        if (currentInasistentes.length === 0) {
+          tbodyInasistentes.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); font-size:11px;">Sin inasistencias registradas hoy.</td></tr>`;
+          return;
+        }
+
+        currentInasistentes.forEach((item, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${escapeHtml(item.nombre)} ${escapeHtml(item.apellido)}</strong></td>
+            <td>${escapeHtml(item.cedula || '-')}</td>
+            <td style="font-size:11px; color:var(--text-muted);">${escapeHtml(item.razon || '-')}</td>
+            <td style="text-align:right;">
+              <button type="button" class="btn-del-item" data-idx="${idx}">🗑️</button>
+            </td>
+          `;
+          tbodyInasistentes.appendChild(tr);
+        });
+
+        tbodyInasistentes.querySelectorAll('.btn-del-item').forEach(b => {
+          b.addEventListener('click', () => {
+            const i = parseInt(b.getAttribute('data-idx'));
+            currentInasistentes.splice(i, 1);
+            renderInasistentesTable();
+          });
+        });
+      }
+
+      btnAddInasistente.addEventListener('click', () => {
+        const nom = inasistenteNombre.value.trim();
+        const ape = inasistenteApellido.value.trim();
+        const ced = inasistenteCedula.value.trim();
+        const raz = inasistenteRazon.value.trim();
+
+        if (!nom || !ape) {
+          showToast('Ingrese al menos Nombre y Apellido del inasistente.');
+          inasistenteNombre.focus();
+          return;
+        }
+
+        currentInasistentes.push({ nombre: nom, apellido: ape, cedula: ced, razon: raz });
+        inasistenteNombre.value = '';
+        inasistenteApellido.value = '';
+        inasistenteCedula.value = '';
+        inasistenteRazon.value = '';
+        renderInasistentesTable();
+        showToast('Inasistente agregado.');
+      });
+
+      /* GESTIÓN DE INGRESADOS DEL MES (MÁX 5) */
+      async function refreshIngresadosTable() {
+        const [year, month] = inputDate.value.split('-');
+        currentMonthIngresados = await window.attendanceDB.getIngresados(year, month);
+        tbodyIngresados.innerHTML = '';
+        badgeIngresadosCount.textContent = `${currentMonthIngresados.length} / 5 máx.`;
+
+        if (currentMonthIngresados.length === 0) {
+          tbodyIngresados.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); font-size:11px;">No hay ingresados en este mes.</td></tr>`;
+          return;
+        }
+
+        currentMonthIngresados.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${escapeHtml(item.nombreApellido)}</td>
+            <td style="text-align:center;">${escapeHtml(item.genero)}</td>
+            <td>${escapeHtml(item.plantelProcedencia || '-')}</td>
+            <td style="text-align:center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : '-'}</td>
+            <td><button type="button" class="btn-del-item" data-id="${item.id}">🗑️</button></td>
+          `;
+          tbodyIngresados.appendChild(tr);
+        });
+
+        tbodyIngresados.querySelectorAll('.btn-del-item').forEach(b => {
+          b.addEventListener('click', async () => {
+            await window.attendanceDB.deleteIngresado(b.getAttribute('data-id'));
+            await refreshIngresadosTable();
+            showToast('Estudiante ingresado eliminado.');
+          });
+        });
+      }
+
+      btnAddIngresado.addEventListener('click', async () => {
+        const nom = ingresadoNombre.value.trim();
+        const gen = ingresadoGen.value;
+        const pla = ingresadoPlantel.value.trim();
+        const fec = ingresadoFecha.value || inputDate.value;
+
+        if (!nom) {
+          showToast('Ingrese Nombre y Apellido del ingresado.');
+          ingresadoNombre.focus();
+          return;
+        }
+
+        const [year, month] = inputDate.value.split('-');
+        try {
+          await window.attendanceDB.addIngresado(year, month, {
+            nombreApellido: nom,
+            genero: gen,
+            plantelProcedencia: pla,
+            fecha: fec
+          });
+          ingresadoNombre.value = '';
+          ingresadoPlantel.value = '';
+          await refreshIngresadosTable();
+          showToast('Estudiante ingresado registrado.');
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      /* GESTIÓN DE EGRESADOS DEL MES (MÁX 5) */
+      async function refreshEgresadosTable() {
+        const [year, month] = inputDate.value.split('-');
+        currentMonthEgresados = await window.attendanceDB.getEgresados(year, month);
+        tbodyEgresados.innerHTML = '';
+        badgeEgresadosCount.textContent = `${currentMonthEgresados.length} / 5 máx.`;
+
+        if (currentMonthEgresados.length === 0) {
+          tbodyEgresados.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); font-size:11px;">No hay egresados en este mes.</td></tr>`;
+          return;
+        }
+
+        currentMonthEgresados.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${escapeHtml(item.nombreApellido)}</td>
+            <td style="text-align:center;">${escapeHtml(item.genero)}</td>
+            <td>${escapeHtml(item.plantelAceptacion || '-')}</td>
+            <td style="text-align:center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : '-'}</td>
+            <td><button type="button" class="btn-del-item" data-id="${item.id}">🗑️</button></td>
+          `;
+          tbodyEgresados.appendChild(tr);
+        });
+
+        tbodyEgresados.querySelectorAll('.btn-del-item').forEach(b => {
+          b.addEventListener('click', async () => {
+            await window.attendanceDB.deleteEgresado(b.getAttribute('data-id'));
+            await refreshEgresadosTable();
+            showToast('Estudiante egresado eliminado.');
+          });
+        });
+      }
+
+      btnAddEgresado.addEventListener('click', async () => {
+        const nom = egresadoNombre.value.trim();
+        const gen = egresadoGen.value;
+        const pla = egresadoPlantel.value.trim();
+        const fec = egresadoFecha.value || inputDate.value;
+
+        if (!nom) {
+          showToast('Ingrese Nombre y Apellido del egresado.');
+          egresadoNombre.focus();
+          return;
+        }
+
+        const [year, month] = inputDate.value.split('-');
+        try {
+          await window.attendanceDB.addEgresado(year, month, {
+            nombreApellido: nom,
+            genero: gen,
+            plantelAceptacion: pla,
+            fecha: fec
+          });
+          egresadoNombre.value = '';
+          egresadoPlantel.value = '';
+          await refreshEgresadosTable();
+          showToast('Estudiante egresado registrado.');
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      /* GESTIÓN DE REPITIENTES DEL MES (MÁX 5) */
+      async function refreshRepitientesTable() {
+        const [year, month] = inputDate.value.split('-');
+        currentMonthRepitientes = await window.attendanceDB.getRepitientes(year, month);
+        tbodyRepitientes.innerHTML = '';
+        badgeRepitientesCount.textContent = `${currentMonthRepitientes.length} / 5 máx.`;
+
+        if (currentMonthRepitientes.length === 0) {
+          tbodyRepitientes.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); font-size:11px;">No hay repitientes en este mes.</td></tr>`;
+          return;
+        }
+
+        currentMonthRepitientes.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${escapeHtml(item.nombreApellido)}</td>
+            <td style="text-align:center;">${escapeHtml(item.edad || '-')}</td>
+            <td style="text-align:center; font-weight:bold;">${item.condicion}ª vez</td>
+            <td><button type="button" class="btn-del-item" data-id="${item.id}">🗑️</button></td>
+          `;
+          tbodyRepitientes.appendChild(tr);
+        });
+
+        tbodyRepitientes.querySelectorAll('.btn-del-item').forEach(b => {
+          b.addEventListener('click', async () => {
+            await window.attendanceDB.deleteRepitiente(b.getAttribute('data-id'));
+            await refreshRepitientesTable();
+            showToast('Estudiante repitiente eliminado.');
+          });
+        });
+      }
+
+      btnAddRepitiente.addEventListener('click', async () => {
+        const nom = repitienteNombre.value.trim();
+        const eda = repitienteEdad.value;
+        const vez = repitienteVez.value;
+
+        if (!nom) {
+          showToast('Ingrese Nombre y Apellido del repitiente.');
+          repitienteNombre.focus();
+          return;
+        }
+
+        const [year, month] = inputDate.value.split('-');
+        try {
+          await window.attendanceDB.addRepitiente(year, month, {
+            nombreApellido: nom,
+            edad: eda,
+            condicion: vez
+          });
+          repitienteNombre.value = '';
+          repitienteEdad.value = '';
+          await refreshRepitientesTable();
+          showToast('Estudiante repitiente registrado.');
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      /* CARGAR REGISTRO DIARIO */
+      async function loadDailyRecord(dateStr) {
+        const rec = await window.attendanceDB.getDailyRecord(dateStr);
+        if (rec) {
+          setClassStatus(!rec.isNoClass);
+          inputNoClassReason.value = rec.noClassReason || '';
+          inputNinos.value = rec.isNoClass ? 0 : Math.max(0, rec.ninos || 0);
+          inputNinas.value = rec.isNoClass ? 0 : Math.max(0, rec.ninas || 0);
+          currentInasistentes = Array.isArray(rec.inasistentes) ? [...rec.inasistentes] : [];
+        } else {
+          setClassStatus(true);
+          inputNoClassReason.value = '';
+          inputNinos.value = 0;
+          inputNinas.value = 0;
+          currentInasistentes = [];
+        }
+        updateTotalAttendance();
+        updateWordCount();
+        renderInasistentesTable();
+        await refreshIngresadosTable();
+        await refreshEgresadosTable();
+        await refreshRepitientesTable();
+      }
+
+      /* GUARDAR REGISTRO DIARIO */
+      btnSaveAttendance.addEventListener('click', async () => {
+        const dateStr = inputDate.value;
+        if (!dateStr) { showToast('Seleccione una fecha.'); return; }
+
+        if (isNoClassState) {
+          const reason = inputNoClassReason.value.trim();
+          if (!reason) {
+            showToast('Por favor ingrese el motivo del día sin clases.');
+            inputNoClassReason.focus();
+            return;
+          }
+        }
+
+        const record = {
+          date: dateStr,
+          isNoClass: isNoClassState,
+          noClassReason: isNoClassState ? inputNoClassReason.value.trim() : '',
+          ninos: isNoClassState ? 0 : sanitizePos(inputNinos),
+          ninas: isNoClassState ? 0 : sanitizePos(inputNinas),
+          inasistentes: currentInasistentes
+        };
+
+        await window.attendanceDB.saveDailyRecord(record);
+        if (navigator.vibrate) navigator.vibrate(50);
+        showToast('Registro diario guardado con éxito.');
+        await refreshMonthlySummary();
+      });
+
+      /* RESUMEN MENSUAL */
+      selectMonth.addEventListener('change', refreshMonthlySummary);
+      selectYear.addEventListener('change', refreshMonthlySummary);
+
+      async function refreshMonthlySummary() {
+        const y = selectYear.value;
+        const m = selectMonth.value;
+
+        currentMonthRecords = await window.attendanceDB.getRecordsByMonthYear(y, m);
+        const ingresados = await window.attendanceDB.getIngresados(y, m);
+        const egresados = await window.attendanceDB.getEgresados(y, m);
+
+        let diasConClase = 0, diasSinClase = 0;
+        let sumV = 0, sumH = 0, sumT = 0;
+
+        currentMonthRecords.forEach(r => {
+          if (r.isNoClass) {
+            diasSinClase++;
+          } else {
+            diasConClase++;
+            const v = r.ninos || 0;
+            const h = r.ninas || 0;
+            sumV += v; sumH += h; sumT += (v + h);
+          }
+        });
+
+        const promV = diasConClase > 0 ? (sumV / diasConClase).toFixed(1) : '0';
+        const promH = diasConClase > 0 ? (sumH / diasConClase).toFixed(1) : '0';
+        const promT = diasConClase > 0 ? (sumT / diasConClase).toFixed(1) : '0';
+
+        valPromedioTotal.textContent = promT;
+        valPromedioNinosNinas.textContent = `${promV} Varones (V) / ${promH} Hembras (H)`;
+        valDiasLectivos.textContent = diasConClase;
+        valDiasSinClases.textContent = diasSinClase;
+        valIntegradosTotal.textContent = ingresados.length;
+        valRetiradosTotal.textContent = egresados.length;
+
+        // Render tabla bitácora
+        renderDailyLogTable(currentMonthRecords);
+        // Render chart
+        renderChart(currentMonthRecords);
+      }
+
+      function renderDailyLogTable(records) {
+        dailyLogTableBody.innerHTML = '';
+        if (!records || records.length === 0) {
+          dailyLogTableBody.innerHTML = `<tr><td colspan="8" style="padding:16px; color:var(--text-muted);">No hay registros en este mes.</td></tr>`;
+          return;
+        }
+
+        const dayLetters = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+        records.forEach(r => {
+          const parts = r.date.split('-');
+          const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
+          const dLetter = dayLetters[dObj.getDay()];
+          const fDate = `${parts[2]}/${parts[1]}`;
+
+          const statusBadge = r.isNoClass ? 
+            `<span style="background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">SIN CLASE</span>` :
+            `<span style="background:#dcfce7; color:#15803d; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">CLASE</span>`;
+
+          const v = r.isNoClass ? '-' : (r.ninos || 0);
+          const h = r.isNoClass ? '-' : (r.ninas || 0);
+          const t = r.isNoClass ? '-' : ((r.ninos || 0) + (r.ninas || 0));
+          const inasCount = (r.inasistentes && r.inasistentes.length > 0) ? `${r.inasistentes.length}` : '-';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-weight:bold;">${dLetter}</td>
+            <td>${fDate}</td>
+            <td>${statusBadge}</td>
+            <td>${v}</td>
+            <td>${h}</td>
+            <td style="font-weight:bold;">${t}</td>
+            <td style="color:#b91c1c; font-weight:bold;">${inasCount}</td>
+            <td>
+              <button type="button" class="btn-edit-day" data-date="${r.date}" style="background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer;">
+                ✏️ Editar
+              </button>
+            </td>
+          `;
+          dailyLogTableBody.appendChild(tr);
+        });
+
+        dailyLogTableBody.querySelectorAll('.btn-edit-day').forEach(b => {
+          b.addEventListener('click', () => {
+            const targetDate = b.getAttribute('data-date');
+            inputDate.value = targetDate;
+            loadDailyRecord(targetDate);
+            navTabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            document.querySelector('[data-tab="form"]').classList.add('active');
+            document.getElementById('tab-form').classList.add('active');
+            showToast(`Cargada fecha ${targetDate.split('-').reverse().join('/')} para editar.`);
+          });
+        });
+      }
+
+      function renderChart(records) {
+        const container = document.getElementById('chartContainer');
+        const schoolDays = records.filter(r => !r.isNoClass);
+        if (schoolDays.length === 0) {
+          container.innerHTML = `<p style="text-align:center; padding:15px; color:var(--text-muted); font-size:12px;">Sin asistencias registradas para graficar este mes.</p>`;
+          return;
+        }
+
+        const max = Math.max(...schoolDays.map(r => (r.ninos || 0) + (r.ninas || 0)), 10);
+        const w = 550, h = 180;
+        const pts = schoolDays.map((r, i) => {
+          const x = 30 + (i * ((w - 60) / Math.max(1, schoolDays.length - 1)));
+          const y = h - 25 - (((r.ninos + r.ninas) / max) * (h - 50));
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(' ');
+
+        container.innerHTML = `
+          <svg viewBox="0 0 ${w} ${h}" style="width:100%; height:auto; display:block;">
+            <polyline fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" points="${pts}" />
+          </svg>
+        `;
+      }
+
+      /* ========================================================
+         5. MODAL DE DATOS PREVIOS ANTES DE EXPORTAR
+         ======================================================== */
+      async function prepareAndPromptExport(type) {
+        pendingExportType = type;
+        const y = selectYear.value;
+        const m = selectMonth.value;
+        const records = await window.attendanceDB.getRecordsByMonthYear(y, m);
+
+        if (records.length === 0) {
+          showToast('No hay registros en este mes para exportar.');
+          return;
+        }
+
+        const cfg = await window.attendanceDB.getConfig();
+
+        // Rellenar campos del modal con lo que haya en configuración o por defecto
+        promptDiasHabiles.value = cfg.diasHabiles || 20;
+        promptMatriculaV.value = cfg.matriculaV || 0;
+        promptMatriculaH.value = cfg.matriculaH || 0;
+        promptExtranjerosV.value = cfg.extranjerosV || 0;
+        promptExtranjerosH.value = cfg.extranjerosH || 0;
+
+        // Renderizar edades en el modal
+        renderPromptAges(cfg.edades || []);
+
+        // Mostrar modal
+        modalExportPrompt.classList.add('active');
+      }
+
+      function renderPromptAges(edadesList) {
+        promptAgesContainer.innerHTML = '';
+        if (edadesList.length === 0) {
+          edadesList = [
+            { edad: 3, v: 0, h: 0 }, { edad: 4, v: 0, h: 0 },
+            { edad: 5, v: 0, h: 0 }, { edad: 6, v: 0, h: 0 },
+            { edad: 7, v: 0, h: 0 }, { edad: 8, v: 0, h: 0 }
+          ];
+        }
+
+        edadesList.forEach((item, idx) => {
+          const row = document.createElement('div');
+          row.style.display = 'grid';
+          row.style.gridTemplateColumns = '80px 1fr 1fr';
+          row.style.gap = '6px';
+          row.style.alignItems = 'center';
+          row.innerHTML = `
+            <span style="font-size:11px; font-weight:bold;">Edad ${item.edad}:</span>
+            <input type="number" class="form-control-sm prompt-age-v" data-edad="${item.edad}" placeholder="V" value="${item.v || 0}" min="0">
+            <input type="number" class="form-control-sm prompt-age-h" data-edad="${item.edad}" placeholder="H" value="${item.h || 0}" min="0">
+          `;
+          promptAgesContainer.appendChild(row);
+        });
+      }
+
+      btnExportPDF.addEventListener('click', () => prepareAndPromptExport('pdf'));
+      btnExportExcel.addEventListener('click', () => prepareAndPromptExport('excel'));
+
+      btnCloseExportModal.addEventListener('click', () => {
+        modalExportPrompt.classList.remove('active');
+      });
+
+      btnConfirmExport.addEventListener('click', async () => {
+        modalExportPrompt.classList.remove('active');
+
+        const y = selectYear.value;
+        const m = parseInt(selectMonth.value, 10);
+        const monthName = selectMonth.options[selectMonth.selectedIndex].text;
+
+        const records = await window.attendanceDB.getRecordsByMonthYear(y, m);
+        const ingresados = await window.attendanceDB.getIngresados(y, m);
+        const egresados = await window.attendanceDB.getEgresados(y, m);
+        const repitientes = await window.attendanceDB.getRepitientes(y, m);
+
+        const baseCfg = await window.attendanceDB.getConfig();
+
+        // Recoger datos del modal
+        const exportCfg = {
+          ...baseCfg,
+          diasHabiles: parseInt(promptDiasHabiles.value, 10) || 20,
+          matriculaV: parseInt(promptMatriculaV.value, 10) || 0,
+          matriculaH: parseInt(promptMatriculaH.value, 10) || 0,
+          extranjerosV: parseInt(promptExtranjerosV.value, 10) || 0,
+          extranjerosH: parseInt(promptExtranjerosH.value, 10) || 0,
+          edades: []
+        };
+
+        const ageVInputs = promptAgesContainer.querySelectorAll('.prompt-age-v');
+        const ageHInputs = promptAgesContainer.querySelectorAll('.prompt-age-h');
+
+        ageVInputs.forEach((vInput, i) => {
+          const edad = vInput.getAttribute('data-edad');
+          const v = parseInt(vInput.value, 10) || 0;
+          const h = parseInt(ageHInputs[i].value, 10) || 0;
+          exportCfg.edades.push({ edad, v, h });
+        });
+
+        // Calcular resumen
+        let diasConClase = 0, diasSinClase = 0;
+        records.forEach(r => {
+          if (r.isNoClass) diasSinClase++; else diasConClase++;
+        });
+        const summary = { diasConClase, diasSinClase };
+
+        if (pendingExportType === 'pdf') {
+          window.mppePdfExport.generateAndPrintPDF(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
+        } else {
+          window.mppeExcelExport.generateReport(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
+          showToast('Informe de Excel generado exitosamente.');
+        }
+      });
+
+      /* ========================================================
+         6. GESTIÓN DE AJUSTES Y CONFIGURACIÓN
+         ======================================================== */
+      function renderConfigAges(edadesList) {
+        containerAgesConfig.innerHTML = '';
+        edadesList.forEach((item, idx) => {
+          const div = document.createElement('div');
+          div.style.display = 'grid';
+          div.style.gridTemplateColumns = '80px 1fr 1fr 30px';
+          div.style.gap = '6px';
+          div.style.alignItems = 'center';
+          div.innerHTML = `
+            <input type="number" class="form-control-sm cfg-age-val" value="${item.edad}" placeholder="Edad" min="1" max="25">
+            <input type="number" class="form-control-sm cfg-age-v" value="${item.v || 0}" placeholder="V" min="0">
+            <input type="number" class="form-control-sm cfg-age-h" value="${item.h || 0}" placeholder="H" min="0">
+            <button type="button" class="btn-del-item btn-del-age" data-idx="${idx}">✕</button>
+          `;
+          containerAgesConfig.appendChild(div);
+        });
+
+        containerAgesConfig.querySelectorAll('.btn-del-age').forEach(b => {
+          b.addEventListener('click', () => {
+            const i = parseInt(b.getAttribute('data-idx'));
+            edadesList.splice(i, 1);
+            renderConfigAges(edadesList);
+          });
+        });
+      }
+
+      let currentConfigEdades = [];
+
+      btnAddAgeRow.addEventListener('click', () => {
+        const nextAge = currentConfigEdades.length > 0 ? (Number(currentConfigEdades[currentConfigEdades.length - 1].edad) + 1) : 3;
+        currentConfigEdades.push({ edad: nextAge, v: 0, h: 0 });
+        renderConfigAges(currentConfigEdades);
+      });
+
+      async function loadSettingsToUI() {
+        const cfg = await window.attendanceDB.getConfig();
+        cfgSchoolName.value = cfg.schoolName || '';
+        cfgDeaCode.value = cfg.deaCode || '';
+        cfgSchoolRif.value = cfg.schoolRif || '';
+        cfgSchoolLocation.value = cfg.schoolLocation || '';
+        cfgTeacherName.value = cfg.teacherName || '';
+        cfgGrade.value = cfg.grade || '';
+        cfgSection.value = cfg.section || '';
+        cfgSchoolYear.value = cfg.schoolYear || '';
+        cfgDiasHabiles.value = cfg.diasHabiles || '';
+        cfgMatriculaV.value = cfg.matriculaV || '';
+        cfgMatriculaH.value = cfg.matriculaH || '';
+        cfgExtranjerosV.value = cfg.extranjerosV || '';
+        cfgExtranjerosH.value = cfg.extranjerosH || '';
+
+        currentConfigEdades = cfg.edades ? [...cfg.edades] : [];
+        renderConfigAges(currentConfigEdades);
+      }
+
+      btnSaveConfig.addEventListener('click', async () => {
+        // Recoger edades de la UI
+        const ageRows = containerAgesConfig.querySelectorAll('div');
+        const edades = [];
+        ageRows.forEach(r => {
+          const e = parseInt(r.querySelector('.cfg-age-val').value, 10);
+          const v = parseInt(r.querySelector('.cfg-age-v').value, 10) || 0;
+          const h = parseInt(r.querySelector('.cfg-age-h').value, 10) || 0;
+          if (!isNaN(e)) edades.push({ edad: e, v, h });
+        });
+
+        const cfg = {
+          schoolName: cfgSchoolName.value.trim(),
+          deaCode: cfgDeaCode.value.trim(),
+          schoolRif: cfgSchoolRif.value.trim(),
+          schoolLocation: cfgSchoolLocation.value.trim(),
+          teacherName: cfgTeacherName.value.trim(),
+          grade: cfgGrade.value.trim(),
+          section: cfgSection.value.trim(),
+          schoolYear: cfgSchoolYear.value.trim(),
+          diasHabiles: parseInt(cfgDiasHabiles.value, 10) || 20,
+          matriculaV: parseInt(cfgMatriculaV.value, 10) || 0,
+          matriculaH: parseInt(cfgMatriculaH.value, 10) || 0,
+          extranjerosV: parseInt(cfgExtranjerosV.value, 10) || 0,
+          extranjerosH: parseInt(cfgExtranjerosH.value, 10) || 0,
+          edades
+        };
+
+        await window.attendanceDB.saveConfig(cfg);
+        showToast('Configuración permanente guardada.');
+      });
+
+      btnClearConfig.addEventListener('click', async () => {
+        if (confirm('¿Desea borrar la configuración guardada? El sistema le preguntará los datos estadísticos cada vez que genere el informe.')) {
+          await window.attendanceDB.clearConfig();
+          await loadSettingsToUI();
+          showToast('Configuración borrada.');
+        }
+      });
+
+      // DEMO DATA
+      btnLoadDemoData.addEventListener('click', async () => {
+        if (confirm('¿Cargar datos realistas de prueba para el mes actual? Se generarán asistencias, inasistentes, ingresos, egresos y repitientes.')) {
+          const y = selectYear.value;
+          const m = parseInt(selectMonth.value, 10);
+          const daysInMonth = new Date(y, m, 0).getDate();
+
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dateObj = new Date(y, m - 1, d);
+            const dw = dateObj.getDay();
+            if (dw === 0 || dw === 6) continue;
+
+            const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isNoClass = (d === 12 || d === 24);
+
+            const record = {
+              date: dateStr,
+              isNoClass,
+              noClassReason: isNoClass ? 'Consejo técnico docente y jornada institucional' : '',
+              ninos: isNoClass ? 0 : Math.floor(Math.random() * 4) + 12,
+              ninas: isNoClass ? 0 : Math.floor(Math.random() * 4) + 13,
+              inasistentes: (d === 5) ? [{ nombre: 'Juan', apellido: 'Pérez', cedula: 'V-34567890', razon: 'Fiebre' }] : []
+            };
+
+            await window.attendanceDB.saveDailyRecord(record);
+          }
+
+          // Agregar 2 ingresados demo
+          try {
+            await window.attendanceDB.addIngresado(y, m, {
+              nombreApellido: 'Carlos Mendoza',
+              genero: 'V',
+              plantelProcedencia: 'U.E. Simón Bolívar',
+              fecha: `${y}-${String(m).padStart(2, '0')}-05`
+            });
+            await window.attendanceDB.addIngresado(y, m, {
+              nombreApellido: 'Valeria Gómez',
+              genero: 'H',
+              plantelProcedencia: 'Colegio La Salle',
+              fecha: `${y}-${String(m).padStart(2, '0')}-14`
+            });
+          } catch(e) {}
+
+          // Agregar 1 egresado demo
+          try {
+            await window.attendanceDB.addEgresado(y, m, {
+              nombreApellido: 'Santiago Rivas',
+              genero: 'V',
+              plantelAceptacion: 'Liceo Caracas',
+              fecha: `${y}-${String(m).padStart(2, '0')}-20`
+            });
+          } catch(e) {}
+
+          // Agregar 1 repitiente demo
+          try {
+            await window.attendanceDB.addRepitiente(y, m, {
+              nombreApellido: 'Mateo Fernández',
+              edad: 9,
+              condicion: '1'
+            });
+          } catch(e) {}
+
+          await refreshMonthlySummary();
+          await loadDailyRecord(inputDate.value);
+          showToast('Datos de demostración cargados exitosamente.');
+        }
+      });
+
+      // RESPALDO JSON
+      btnExportBackup.addEventListener('click', async () => {
+        const y = selectYear.value;
+        const m = selectMonth.value;
+        const records = await window.attendanceDB.getRecordsByMonthYear(y, m);
+        const cfg = await window.attendanceDB.getConfig();
+        const json = JSON.stringify({ version: '2.0', exportedAt: new Date().toISOString(), config: cfg, records }, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Respaldo_Asistencia_MPPE_${y}_${m}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Respaldo descargado.');
+      });
+
+      inputImportBackup.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+          try {
+            const data = JSON.parse(evt.target.result);
+            if (data.config) await window.attendanceDB.saveConfig(data.config);
+            if (Array.isArray(data.records)) {
+              for (const r of data.records) {
+                await window.attendanceDB.saveDailyRecord(r);
+              }
+            }
+            await refreshMonthlySummary();
+            await loadDailyRecord(inputDate.value);
+            await loadSettingsToUI();
+            showToast('Respaldo restaurado con éxito.');
+          } catch (err) {
+            alert('Error al leer el archivo de respaldo.');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      // Inicialización
+      await loadSettingsToUI();
+      await loadDailyRecord(todayStr);
+      await refreshMonthlySummary();
+    });
+  </script>
+</body>
+</html>

@@ -113,7 +113,7 @@ Para garantizar una experiencia óptima, fluidez y persistencia segura de los da
 
 - **Tus datos nunca salen de tu dispositivo**: No existe ningún servidor remoto ni base de datos en la nube que recolecte los nombres, cédulas o asistencias de los estudiantes.
 - **Base de Datos Local**: Todo se almacena en el motor **IndexedDB** y **LocalStorage** de tu propio dispositivo.
-- **Copias de Seguridad (Backup)**: En la pestaña de **Ajustes**, dispones de un botón para **Exportar Copia de Seguridad (.json)** para resguardar tus datos en un pendrive, correo personal o enviártelos por WhatsApp, y un botón para **Restaurar Copia** en caso de cambiar de teléfono.
+- **Copias de Seguridad en Google Drive y Correo**: En la pestaña de **Ajustes**, puedes registrar un **correo secundario recomendado** para respaldar tu información. Con un solo clic puedes subir la copia directamente a tu **Google Drive**, compartirla por WhatsApp/Gmail mediante el menú nativo del teléfono, o descargar el archivo `.json` de resguardo. También dispones del botón **Restaurar Copia** para recuperar tus datos al cambiar o formatear de dispositivo.
 
 ---
 

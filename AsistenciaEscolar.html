@@ -1234,20 +1234,60 @@
         </button>
       </div>
 
-      <!-- RESPALDO JSON Y DEMO -->
+      <!-- RESPALDO Y COPIAS DE SEGURIDAD (GOOGLE DRIVE / EMAIL) -->
       <div class="card">
-        <div class="card-title">📦 Copia de Seguridad y Datos Demo</div>
+        <div class="card-title">☁️ Respaldo en Google Drive y Correo</div>
+        
+        <div style="margin-bottom: 12px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+            📧 Correo para Respaldo en Google Drive / Gmail:
+          </label>
+          <input type="email" id="inputBackupEmail" class="form-control" placeholder="ejemplo.docente@gmail.com" style="margin-bottom: 6px;">
+          
+          <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 10px 12px; border-radius: 6px; font-size: 11px; color: #1e40af; line-height: 1.45;">
+            💡 <strong>Recomendación de Seguridad:</strong> Le sugerimos registrar un <strong>correo secundario</strong> (exclusivo para respaldos o gestión escolar). De esta forma mantendrá organizadas sus copias de seguridad en Google Drive sin saturar su cuenta personal principal ni exponer datos privados.
+          </div>
+        </div>
+
         <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button type="button" id="btnLoadDemoData" style="background:#16a34a; color:white; border:none; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer;">
-            ⚡ Cargar Datos de Demostración del Mes
+          <button type="button" id="btnCloudBackup" style="background: linear-gradient(135deg, #0284c7, #2563eb); color:white; border:none; padding:12px; border-radius:var(--radius-md); font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 2px 5px rgba(37,99,235,0.25);">
+            <svg style="width:18px;height:18px;fill:currentColor;" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            Guardar Respaldo en Google Drive / Correo
           </button>
+
           <button type="button" id="btnExportBackup" style="background:#4f46e5; color:white; border:none; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer;">
-            ⬇️ Descargar Copia de Seguridad (.json)
+            ⬇️ Descargar Copia Local (.json)
           </button>
+
           <label style="background:#e0e7ff; color:#3730a3; border:1px dashed #6366f1; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; text-align:center; display:block;">
             ⬆️ Restaurar Copia de Seguridad
             <input type="file" id="inputImportBackup" accept=".json" style="display: none;">
           </label>
+
+          <button type="button" id="btnLoadDemoData" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px; border-radius:var(--radius-md); font-weight:600; font-size:11px; cursor:pointer; margin-top:4px;">
+            ⚡ Cargar Datos de Demostración del Mes
+          </button>
+        </div>
+      </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" id="btnCloudBackup" style="background: linear-gradient(135deg, #0284c7, #2563eb); color:white; border:none; padding:12px; border-radius:var(--radius-md); font-weight:700; font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow: 0 2px 5px rgba(37,99,235,0.25);">
+            <svg style="width:18px;height:18px;fill:currentColor;" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            Guardar Respaldo en Google Drive / Correo
+          </button>
+
+          <button type="button" id="btnExportBackup" style="background:#4f46e5; color:white; border:none; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer;">
+            â¬‡ï¸ Descargar Copia Local (.json)
+          </button>
+
+          <label style="background:#e0e7ff; color:#3730a3; border:1px dashed #6366f1; padding:10px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; text-align:center; display:block;">
+            â¬†ï¸ Restaurar Copia de Seguridad
+            <input type="file" id="inputImportBackup" accept=".json" style="display: none;">
+          </label>
+
+          <button type="button" id="btnLoadDemoData" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px; border-radius:var(--radius-md); font-weight:600; font-size:11px; cursor:pointer; margin-top:4px;">
+            âš¡ Cargar Datos de DemostraciÃ³n del Mes
+          </button>
         </div>
       </div>
 
@@ -1314,6 +1354,54 @@
   </div>
 
   <!-- TOAST NOTIFICACIÓN -->
+    <!-- MODAL: RESPALDO GOOGLE DRIVE Y CORREO -->
+  <div id="modalCloudBackup" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">☁️ Respaldo en Google Drive y Correo</h3>
+        <button type="button" id="btnCloseCloudModal" class="btn-close-modal">✕</button>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-main); margin-bottom:12px; line-height:1.5;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px; margin-bottom:10px; color:#166534;">
+          ✅ <strong>¡Copia de seguridad preparada con éxito!</strong>
+          <div id="cloudModalFileName" style="font-size:11px; color:#15803d; margin-top:3px; word-break:break-all;"></div>
+        </div>
+
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px; margin-bottom:12px;">
+          <div style="font-weight:700; color:#1e40af; margin-bottom:4px;">📧 Correo secundario registrado:</div>
+          <div id="cloudModalEmailDisplay" style="font-size:12px; font-weight:bold; color:#1d4ed8;">No especificado</div>
+          <div style="font-size:11px; color:#3b82f6; margin-top:4px;">
+            💡 <em>Consejo: Usar un correo secundario ayuda a mantener tus respaldos escolares en Google Drive ordenados y separados de tus correos personales.</em>
+          </div>
+        </div>
+
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+          Elige la acción que deseas realizar con el respaldo:
+        </p>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="button" id="btnActionShareNative" style="background:#2563eb; color:white; border:none; padding:11px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+          📱 Compartir con Teléfono (Google Drive / Gmail / WhatsApp)
+        </button>
+
+        <button type="button" id="btnActionOpenDrive" style="background:#059669; color:white; border:none; padding:11px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+          📂 Abrir Google Drive en el Navegador
+        </button>
+
+        <button type="button" id="btnActionSendEmail" style="background:#4f46e5; color:white; border:none; padding:11px; border-radius:var(--radius-md); font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+          ✉️ Enviar por Correo Electrónico
+        </button>
+
+        <button type="button" id="btnActionDownloadLocal" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:10px; border-radius:var(--radius-md); font-weight:600; font-size:12px; cursor:pointer;">
+          ⬇️ Descargar Archivo en este Dispositivo
+        </button>
+      </div>
+    </div>
+  </div>
+
+
   <div id="toast" class="toast">Guardado correctamente</div>
 
   <!-- JAVASCRIPT EMBEBIDO AUTÓNOMO -->
@@ -1568,6 +1656,7 @@
           matriculaH: 0,
           extranjerosV: 0,
           extranjerosH: 0,
+          backupEmail: '',
           edades: [
             { edad: 3, v: 0, h: 0 },
             { edad: 4, v: 0, h: 0 },
@@ -2573,6 +2662,18 @@
       const btnSaveConfig = document.getElementById('btnSaveConfig');
       const btnClearConfig = document.getElementById('btnClearConfig');
 
+            const inputBackupEmail = document.getElementById('inputBackupEmail');
+      const btnCloudBackup = document.getElementById('btnCloudBackup');
+      const modalCloudBackup = document.getElementById('modalCloudBackup');
+      const btnCloseCloudModal = document.getElementById('btnCloseCloudModal');
+      const cloudModalFileName = document.getElementById('cloudModalFileName');
+      const cloudModalEmailDisplay = document.getElementById('cloudModalEmailDisplay');
+      const btnActionShareNative = document.getElementById('btnActionShareNative');
+      const btnActionOpenDrive = document.getElementById('btnActionOpenDrive');
+      const btnActionSendEmail = document.getElementById('btnActionSendEmail');
+      const btnActionDownloadLocal = document.getElementById('btnActionDownloadLocal');
+      let currentBackupPayload = null;
+
       const btnLoadDemoData = document.getElementById('btnLoadDemoData');
       const btnExportBackup = document.getElementById('btnExportBackup');
       const inputImportBackup = document.getElementById('inputImportBackup');
@@ -3296,6 +3397,7 @@
         cfgMatriculaH.value = cfg.matriculaH || '';
         cfgExtranjerosV.value = cfg.extranjerosV || '';
         cfgExtranjerosH.value = cfg.extranjerosH || '';
+        if (inputBackupEmail) inputBackupEmail.value = cfg.backupEmail || '';
 
         currentConfigEdades = cfg.edades ? [...cfg.edades] : [];
         renderConfigAges(currentConfigEdades);
@@ -3326,6 +3428,7 @@
           matriculaH: parseInt(cfgMatriculaH.value, 10) || 0,
           extranjerosV: parseInt(cfgExtranjerosV.value, 10) || 0,
           extranjerosH: parseInt(cfgExtranjerosH.value, 10) || 0,
+          backupEmail: inputBackupEmail ? inputBackupEmail.value.trim() : '',
           edades
         };
 
@@ -3409,22 +3512,154 @@
         }
       });
 
-      // RESPALDO JSON
-      btnExportBackup.addEventListener('click', async () => {
+      // FUNCION GENERADORA DE RESPALDO JSON
+      async function prepareBackupData() {
         const y = selectYear.value;
         const m = selectMonth.value;
         const records = await window.attendanceDB.getRecordsByMonthYear(y, m);
         const cfg = await window.attendanceDB.getConfig();
-        const json = JSON.stringify({ version: '2.0', exportedAt: new Date().toISOString(), config: cfg, records }, null, 2);
+        const email = (inputBackupEmail ? inputBackupEmail.value : (cfg.backupEmail || '')).trim();
+        if (email && cfg.backupEmail !== email) {
+          cfg.backupEmail = email;
+          await window.attendanceDB.saveConfig(cfg);
+        }
+        const json = JSON.stringify({
+          version: '2.0',
+          type: 'ASISTENCIA_ESCOLAR_BACKUP_MPPE',
+          exportedAt: new Date().toISOString(),
+          mes: `${y}-${m}`,
+          backupEmail: email,
+          config: cfg,
+          records
+        }, null, 2);
+        const fileName = `Respaldo_Asistencia_MPPE_${y}_${m}.json`;
+        return { json, fileName, email, y, m };
+      }
+
+      function downloadBackupFile(json, fileName) {
         const blob = new Blob([json], { type: 'application/json' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `Respaldo_Asistencia_MPPE_${y}_${m}.json`;
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToast('Respaldo descargado.');
+      }
+
+      // RESPALDO LOCAL DIRECTO (.JSON)
+      btnExportBackup.addEventListener('click', async () => {
+        const b = await prepareBackupData();
+        downloadBackupFile(b.json, b.fileName);
+        showToast('Respaldo descargado correctamente.');
       });
+
+      // RESPALDO EN GOOGLE DRIVE Y CORREO
+      if (btnCloudBackup) {
+        btnCloudBackup.addEventListener('click', async () => {
+          currentBackupPayload = await prepareBackupData();
+          cloudModalFileName.textContent = `Archivo: ${currentBackupPayload.fileName}`;
+          if (currentBackupPayload.email) {
+            cloudModalEmailDisplay.textContent = currentBackupPayload.email;
+          } else {
+            cloudModalEmailDisplay.innerHTML = '<span style="color:#dc2626;">No configurado</span> (Escríbelo en el campo de arriba)';
+          }
+
+          // Si el navegador soporta compartir archivos nativos (Android / iOS):
+          if (navigator.canShare) {
+            try {
+              const blob = new Blob([currentBackupPayload.json], { type: 'application/json' });
+              const file = new File([blob], currentBackupPayload.fileName, { type: 'application/json' });
+              if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                  title: `Respaldo Asistencia Escolar (${currentBackupPayload.m}/${currentBackupPayload.y})`,
+                  text: `Copia de seguridad del sistema de Asistencia Escolar. Guardar en Google Drive o enviar al correo ${currentBackupPayload.email || ''}.`,
+                  files: [file]
+                });
+                showToast('Respaldo compartido.');
+                return;
+              }
+            } catch (err) {
+              if (err.name !== 'AbortError') {
+                console.log('Fallo compartir nativo, abriendo modal:', err);
+              } else {
+                return; // Usuario cancelÃ³ el share
+              }
+            }
+          }
+
+          // Abrir modal con opciones
+          modalCloudBackup.classList.add('active');
+        });
+      }
+
+      if (btnCloseCloudModal) {
+        btnCloseCloudModal.addEventListener('click', () => {
+          modalCloudBackup.classList.remove('active');
+        });
+      }
+
+      if (btnActionShareNative) {
+        btnActionShareNative.addEventListener('click', async () => {
+          if (!currentBackupPayload) currentBackupPayload = await prepareBackupData();
+          try {
+            const blob = new Blob([currentBackupPayload.json], { type: 'application/json' });
+            const file = new File([blob], currentBackupPayload.fileName, { type: 'application/json' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: `Respaldo Asistencia Escolar (${currentBackupPayload.m}/${currentBackupPayload.y})`,
+                text: `Copia de seguridad oficial MPPE para Google Drive / Correo ${currentBackupPayload.email || ''}.`,
+                files: [file]
+              });
+              modalCloudBackup.classList.remove('active');
+              showToast('Respaldo compartido.');
+            } else {
+              alert('Tu navegador no admite compartir archivos directamente desde esta ventana. Usa la opción "Abrir Google Drive" o "Descargar Archivo".');
+            }
+          } catch (err) {
+            if (err.name !== 'AbortError') alert('No se pudo compartir: ' + err.message);
+          }
+        });
+      }
+
+      if (btnActionOpenDrive) {
+        btnActionOpenDrive.addEventListener('click', async () => {
+          if (!currentBackupPayload) currentBackupPayload = await prepareBackupData();
+          downloadBackupFile(currentBackupPayload.json, currentBackupPayload.fileName);
+          showToast('Archivo descargado. Abriendo Google Drive...');
+          window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+        });
+      }
+
+      if (btnActionSendEmail) {
+        btnActionSendEmail.addEventListener('click', async () => {
+          if (!currentBackupPayload) currentBackupPayload = await prepareBackupData();
+          let target = currentBackupPayload.email;
+          if (!target) {
+            target = prompt('Por favor ingrese su correo secundario para el respaldo:');
+            if (target) {
+              target = target.trim();
+              if (inputBackupEmail) inputBackupEmail.value = target;
+              const cfg = await window.attendanceDB.getConfig();
+              cfg.backupEmail = target;
+              await window.attendanceDB.saveConfig(cfg);
+            }
+          }
+          downloadBackupFile(currentBackupPayload.json, currentBackupPayload.fileName);
+          const mailSubject = encodeURIComponent(`Respaldo Asistencia Escolar - ${currentBackupPayload.m}/${currentBackupPayload.y}`);
+          const mailBody = encodeURIComponent(`Hola,\n\nSe ha generado el respaldo mensual del sistema de Asistencia Escolar (${currentBackupPayload.fileName}).\n\nPor favor adjunte el archivo JSON recién descargado en este correo para mantenerlo resguardado en su bandeja de entrada o en Google Drive.\n\nFecha de exportación: ${new Date().toLocaleString()}`);
+          const mailto = `mailto:${target || ''}?subject=${mailSubject}&body=${mailBody}`;
+          window.location.href = mailto;
+          showToast('Abriendo gestor de correo...');
+        });
+      }
+
+      if (btnActionDownloadLocal) {
+        btnActionDownloadLocal.addEventListener('click', async () => {
+          if (!currentBackupPayload) currentBackupPayload = await prepareBackupData();
+          downloadBackupFile(currentBackupPayload.json, currentBackupPayload.fileName);
+          showToast('Respaldo descargado en el dispositivo.');
+        });
+      }
 
       inputImportBackup.addEventListener('change', (e) => {
         const file = e.target.files[0];

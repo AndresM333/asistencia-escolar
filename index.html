@@ -480,19 +480,61 @@
       border-top: 1px solid var(--border);
     }
 
-    .btn-del-item {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: none;
+    .btn-edit-item {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
       padding: 3px 6px;
       border-radius: 4px;
       font-size: 11px;
       cursor: pointer;
+      margin-right: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.dark-mode .btn-edit-item {
+      background: #1e3a8a;
+      color: #93c5fd;
+      border-color: #3b82f6;
+    }
+
+    .btn-del-item {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     body.dark-mode .btn-del-item {
       background: #7f1d1d;
       color: #fca5a5;
+      border-color: #991b1b;
+    }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 11px;
+      background: #f1f5f9;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    body.dark-mode .btn-modal-cancel {
+      background: #334155;
+      color: #f8fafc;
+      border-color: #475569;
     }
 
     /* SAVE BUTTON */
@@ -896,7 +938,7 @@
                   <th>Alumno</th>
                   <th>Cédula</th>
                   <th>Razón</th>
-                  <th></th>
+                  <th style="text-align:right;">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tbodyInasistentes">
@@ -936,12 +978,14 @@
             <button type="button" id="btnAddIngresado" class="btn-add-item" style="width: 100%; margin-bottom: 8px;">
               ➕ Agregar Estudiante Ingresado
             </button>
-            <table class="items-table">
-              <thead>
-                <tr><th>Nombre</th><th>Gen</th><th>Procedencia</th><th>Fecha</th><th></th></tr>
-              </thead>
-              <tbody id="tbodyIngresados"></tbody>
-            </table>
+            <div style="overflow-x: auto; margin-top: 8px;">
+              <table class="items-table">
+                <thead>
+                  <tr><th>Nombre</th><th>Gen</th><th>Procedencia</th><th>Fecha</th><th style="text-align:right;">Acciones</th></tr>
+                </thead>
+                <tbody id="tbodyIngresados"></tbody>
+              </table>
+            </div>
           </div>
         </details>
 
@@ -967,12 +1011,14 @@
             <button type="button" id="btnAddEgresado" class="btn-add-item" style="width: 100%; margin-bottom: 8px;">
               ➕ Agregar Estudiante Egresado
             </button>
-            <table class="items-table">
-              <thead>
-                <tr><th>Nombre</th><th>Gen</th><th>Plantel Aceptación</th><th>Fecha</th><th></th></tr>
-              </thead>
-              <tbody id="tbodyEgresados"></tbody>
-            </table>
+            <div style="overflow-x: auto; margin-top: 8px;">
+              <table class="items-table">
+                <thead>
+                  <tr><th>Nombre</th><th>Gen</th><th>Plantel Aceptación</th><th>Fecha</th><th style="text-align:right;">Acciones</th></tr>
+                </thead>
+                <tbody id="tbodyEgresados"></tbody>
+              </table>
+            </div>
           </div>
         </details>
 
@@ -998,12 +1044,14 @@
             <button type="button" id="btnAddRepitiente" class="btn-add-item" style="width: 100%; margin-bottom: 8px;">
               ➕ Agregar Estudiante Repitiente
             </button>
-            <table class="items-table">
-              <thead>
-                <tr><th>Nombre</th><th>Edad</th><th>Condición</th><th></th></tr>
-              </thead>
-              <tbody id="tbodyRepitientes"></tbody>
-            </table>
+            <div style="overflow-x: auto; margin-top: 8px;">
+              <table class="items-table">
+                <thead>
+                  <tr><th>Nombre</th><th>Edad</th><th>Condición</th><th style="text-align:right;">Acciones</th></tr>
+                </thead>
+                <tbody id="tbodyRepitientes"></tbody>
+              </table>
+            </div>
           </div>
         </details>
       </div>
@@ -1381,6 +1429,48 @@
   </div>
 
 
+    <!-- MODAL: CONFIRMACIÓN DE BORRADO -->
+  <div id="modalConfirmDelete" class="modal-overlay">
+    <div class="modal-container" style="max-width: 360px; text-align: center;">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 12px auto;">
+        ⚠️
+      </div>
+      <h3 class="modal-title" style="margin-bottom: 8px; justify-content: center; font-size: 16px;">¿Está seguro de eliminar?</h3>
+      <p id="confirmDeleteText" style="font-size: 13px; color: var(--text-muted); line-height: 1.45; margin-bottom: 18px;">
+        Esta acción no se puede deshacer.
+      </p>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" id="btnCancelDelete" class="btn-modal-cancel">
+          Cancelar
+        </button>
+        <button type="button" id="btnConfirmDelete" style="flex: 1; padding: 11px; background: #dc2626; color: white; border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);">
+          Sí, Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR REGISTRO -->
+  <div id="modalEditRecord" class="modal-overlay">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 id="editRecordModalTitle" class="modal-title">✏️ Editar Registro</h3>
+        <button type="button" id="btnCloseEditRecordModal" class="btn-close-modal">✕</button>
+      </div>
+      <div id="editRecordFieldsContainer" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;">
+        <!-- Los campos se generan dinámicamente según el tipo -->
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" id="btnCancelEditRecord" class="btn-modal-cancel">
+          Cancelar
+        </button>
+        <button type="button" id="btnSaveEditRecord" style="flex: 1; padding: 11px; background: #2563eb; color: white; border: none; border-radius: var(--radius-md); font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast">Guardado correctamente</div>
 
   <!-- JAVASCRIPT EMBEBIDO AUTÓNOMO -->
@@ -1512,6 +1602,10 @@
         return this._addItem(STORE_INGRESADOS, data);
       }
 
+      async updateIngresado(item) {
+        return this._updateItem(STORE_INGRESADOS, item);
+      }
+
       async deleteIngresado(id) {
         return this._deleteItem(STORE_INGRESADOS, id);
       }
@@ -1531,6 +1625,10 @@
         return this._addItem(STORE_EGRESADOS, data);
       }
 
+      async updateEgresado(item) {
+        return this._updateItem(STORE_EGRESADOS, item);
+      }
+
       async deleteEgresado(id) {
         return this._deleteItem(STORE_EGRESADOS, id);
       }
@@ -1548,6 +1646,10 @@
         }
         data.mes = `${year}-${String(month).padStart(2, '0')}`;
         return this._addItem(STORE_REPITIENTES, data);
+      }
+
+      async updateRepitiente(item) {
+        return this._updateItem(STORE_REPITIENTES, item);
       }
 
       async deleteRepitiente(id) {
@@ -1607,6 +1709,32 @@
           }
           localStorage.setItem(storeName, JSON.stringify(all));
           return true;
+        }
+      }
+
+      async _updateItem(storeName, item) {
+        await this.initPromise;
+        if (this.db) {
+          return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([storeName], 'readwrite');
+            if (item.id && typeof item.id === 'string' && !isNaN(Number(item.id))) {
+              item.id = Number(item.id);
+            }
+            const req = tx.objectStore(storeName).put(item);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+          });
+        } else {
+          const all = this._getLS(storeName);
+          for (const mes in all) {
+            const idx = all[mes].findIndex(x => x.id == item.id);
+            if (idx !== -1) {
+              all[mes][idx] = item;
+              break;
+            }
+          }
+          localStorage.setItem(storeName, JSON.stringify(all));
+          return item.id;
         }
       }
 
@@ -2801,6 +2929,266 @@
         displayTotal.textContent = v + h;
       }
 
+      /* VENTANA EMERGENTE DE CONFIRMACIÓN DE BORRADO */
+      const modalConfirmDelete = document.getElementById('modalConfirmDelete');
+      const confirmDeleteText = document.getElementById('confirmDeleteText');
+      const btnCancelDelete = document.getElementById('btnCancelDelete');
+      const btnConfirmDelete = document.getElementById('btnConfirmDelete');
+      let pendingDeleteCallback = null;
+
+      function openDeleteConfirm(messageHtml, callback) {
+        if (!modalConfirmDelete) {
+          if (confirm('¿Está seguro de eliminar este registro?')) callback();
+          return;
+        }
+        confirmDeleteText.innerHTML = messageHtml;
+        pendingDeleteCallback = callback;
+        modalConfirmDelete.classList.add('active');
+      }
+
+      function closeDeleteConfirm() {
+        if (modalConfirmDelete) modalConfirmDelete.classList.remove('active');
+        pendingDeleteCallback = null;
+      }
+
+      if (btnCancelDelete) btnCancelDelete.addEventListener('click', closeDeleteConfirm);
+      if (modalConfirmDelete) {
+        modalConfirmDelete.addEventListener('click', (e) => {
+          if (e.target === modalConfirmDelete) closeDeleteConfirm();
+        });
+      }
+      if (btnConfirmDelete) {
+        btnConfirmDelete.addEventListener('click', async () => {
+          if (pendingDeleteCallback) {
+            const cb = pendingDeleteCallback;
+            closeDeleteConfirm();
+            await cb();
+          }
+        });
+      }
+
+      /* VENTANA EMERGENTE DE EDICIÓN DE REGISTROS */
+      const modalEditRecord = document.getElementById('modalEditRecord');
+      const editRecordModalTitle = document.getElementById('editRecordModalTitle');
+      const btnCloseEditRecordModal = document.getElementById('btnCloseEditRecordModal');
+      const btnCancelEditRecord = document.getElementById('btnCancelEditRecord');
+      const btnSaveEditRecord = document.getElementById('btnSaveEditRecord');
+      const editRecordFieldsContainer = document.getElementById('editRecordFieldsContainer');
+      let currentEditState = null;
+
+      function closeEditRecordModal() {
+        if (modalEditRecord) modalEditRecord.classList.remove('active');
+        currentEditState = null;
+      }
+
+      if (btnCloseEditRecordModal) btnCloseEditRecordModal.addEventListener('click', closeEditRecordModal);
+      if (btnCancelEditRecord) btnCancelEditRecord.addEventListener('click', closeEditRecordModal);
+      if (modalEditRecord) {
+        modalEditRecord.addEventListener('click', (e) => {
+          if (e.target === modalEditRecord) closeEditRecordModal();
+        });
+      }
+
+      function openEditRecordModal(type, target) {
+        if (!modalEditRecord) return;
+
+        if (type === 'inasistente') {
+          const item = currentInasistentes[target];
+          if (!item) return;
+          currentEditState = { type, idx: target };
+          editRecordModalTitle.textContent = '✏️ Editar Alumno Inasistente';
+          editRecordFieldsContainer.innerHTML = `
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Nombre:</label>
+              <input type="text" id="editInasNombre" class="form-control-sm" value="${escapeHtml(item.nombre || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Apellido:</label>
+              <input type="text" id="editInasApellido" class="form-control-sm" value="${escapeHtml(item.apellido || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Cédula / Cédula escolar:</label>
+              <input type="text" id="editInasCedula" class="form-control-sm" value="${escapeHtml(item.cedula || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Razón de inasistencia (Opcional):</label>
+              <input type="text" id="editInasRazon" class="form-control-sm" value="${escapeHtml(item.razon || '')}">
+            </div>
+          `;
+          modalEditRecord.classList.add('active');
+          setTimeout(() => document.getElementById('editInasNombre')?.focus(), 100);
+        }
+        else if (type === 'ingresado') {
+          const item = currentMonthIngresados.find(x => x.id == target);
+          if (!item) return;
+          currentEditState = { type, id: target, item };
+          editRecordModalTitle.textContent = '✏️ Editar Estudiante Ingresado';
+          editRecordFieldsContainer.innerHTML = `
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Nombre y Apellido:</label>
+              <input type="text" id="editIngNombre" class="form-control-sm" value="${escapeHtml(item.nombreApellido || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Género:</label>
+              <select id="editIngGen" class="form-control-sm">
+                <option value="V" ${item.genero === 'V' ? 'selected' : ''}>Varón (V)</option>
+                <option value="H" ${item.genero === 'H' ? 'selected' : ''}>Hembra (H)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Plantel de Procedencia:</label>
+              <input type="text" id="editIngPlantel" class="form-control-sm" value="${escapeHtml(item.plantelProcedencia || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Fecha de Ingreso:</label>
+              <input type="date" id="editIngFecha" class="form-control-sm" value="${item.fecha || ''}">
+            </div>
+          `;
+          modalEditRecord.classList.add('active');
+          setTimeout(() => document.getElementById('editIngNombre')?.focus(), 100);
+        }
+        else if (type === 'egresado') {
+          const item = currentMonthEgresados.find(x => x.id == target);
+          if (!item) return;
+          currentEditState = { type, id: target, item };
+          editRecordModalTitle.textContent = '✏️ Editar Estudiante Egresado';
+          editRecordFieldsContainer.innerHTML = `
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Nombre y Apellido:</label>
+              <input type="text" id="editEgrNombre" class="form-control-sm" value="${escapeHtml(item.nombreApellido || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Género:</label>
+              <select id="editEgrGen" class="form-control-sm">
+                <option value="V" ${item.genero === 'V' ? 'selected' : ''}>Varón (V)</option>
+                <option value="H" ${item.genero === 'H' ? 'selected' : ''}>Hembra (H)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Plantel Aceptación de Cupo:</label>
+              <input type="text" id="editEgrPlantel" class="form-control-sm" value="${escapeHtml(item.plantelAceptacion || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Fecha de Egreso:</label>
+              <input type="date" id="editEgrFecha" class="form-control-sm" value="${item.fecha || ''}">
+            </div>
+          `;
+          modalEditRecord.classList.add('active');
+          setTimeout(() => document.getElementById('editEgrNombre')?.focus(), 100);
+        }
+        else if (type === 'repitiente') {
+          const item = currentMonthRepitientes.find(x => x.id == target);
+          if (!item) return;
+          currentEditState = { type, id: target, item };
+          editRecordModalTitle.textContent = '✏️ Editar Estudiante Repitiente';
+          editRecordFieldsContainer.innerHTML = `
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Nombre y Apellido:</label>
+              <input type="text" id="editRepNombre" class="form-control-sm" value="${escapeHtml(item.nombreApellido || '')}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Edad:</label>
+              <input type="number" id="editRepEdad" class="form-control-sm" min="3" max="25" value="${item.edad || ''}">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px; font-weight:700;">Condición:</label>
+              <select id="editRepVez" class="form-control-sm">
+                <option value="1" ${String(item.condicion) === '1' ? 'selected' : ''}>1ª vez</option>
+                <option value="2" ${String(item.condicion) === '2' ? 'selected' : ''}>2ª vez</option>
+                <option value="3" ${String(item.condicion) === '3' ? 'selected' : ''}>3ª vez</option>
+              </select>
+            </div>
+          `;
+          modalEditRecord.classList.add('active');
+          setTimeout(() => document.getElementById('editRepNombre')?.focus(), 100);
+        }
+      }
+
+      if (btnSaveEditRecord) {
+        btnSaveEditRecord.addEventListener('click', async () => {
+          if (!currentEditState) return;
+          const { type } = currentEditState;
+
+          if (type === 'inasistente') {
+            const nom = document.getElementById('editInasNombre').value.trim();
+            const ape = document.getElementById('editInasApellido').value.trim();
+            const ced = document.getElementById('editInasCedula').value.trim();
+            const raz = document.getElementById('editInasRazon').value.trim();
+            if (!nom || !ape) {
+              alert('Ingrese al menos Nombre y Apellido del inasistente.');
+              return;
+            }
+            currentInasistentes[currentEditState.idx] = { nombre: nom, apellido: ape, cedula: ced, razon: raz };
+            const dailyRec = await window.attendanceDB.getDailyRecord(inputDate.value);
+            if (dailyRec) {
+              dailyRec.inasistentes = currentInasistentes;
+              await window.attendanceDB.saveDailyRecord(dailyRec);
+            }
+            renderInasistentesTable();
+            closeEditRecordModal();
+            showToast('Inasistente actualizado.');
+          }
+          else if (type === 'ingresado') {
+            const nom = document.getElementById('editIngNombre').value.trim();
+            const gen = document.getElementById('editIngGen').value;
+            const pla = document.getElementById('editIngPlantel').value.trim();
+            const fec = document.getElementById('editIngFecha').value;
+            if (!nom) {
+              alert('Ingrese Nombre y Apellido del ingresado.');
+              return;
+            }
+            const item = currentEditState.item;
+            item.nombreApellido = nom;
+            item.genero = gen;
+            item.plantelProcedencia = pla;
+            item.fecha = fec;
+            await window.attendanceDB.updateIngresado(item);
+            await refreshIngresadosTable();
+            await refreshMonthlySummary();
+            closeEditRecordModal();
+            showToast('Estudiante ingresado actualizado.');
+          }
+          else if (type === 'egresado') {
+            const nom = document.getElementById('editEgrNombre').value.trim();
+            const gen = document.getElementById('editEgrGen').value;
+            const pla = document.getElementById('editEgrPlantel').value.trim();
+            const fec = document.getElementById('editEgrFecha').value;
+            if (!nom) {
+              alert('Ingrese Nombre y Apellido del egresado.');
+              return;
+            }
+            const item = currentEditState.item;
+            item.nombreApellido = nom;
+            item.genero = gen;
+            item.plantelAceptacion = pla;
+            item.fecha = fec;
+            await window.attendanceDB.updateEgresado(item);
+            await refreshEgresadosTable();
+            await refreshMonthlySummary();
+            closeEditRecordModal();
+            showToast('Estudiante egresado actualizado.');
+          }
+          else if (type === 'repitiente') {
+            const nom = document.getElementById('editRepNombre').value.trim();
+            const eda = document.getElementById('editRepEdad').value;
+            const vez = document.getElementById('editRepVez').value;
+            if (!nom) {
+              alert('Ingrese Nombre y Apellido del repitiente.');
+              return;
+            }
+            const item = currentEditState.item;
+            item.nombreApellido = nom;
+            item.edad = eda;
+            item.condicion = vez;
+            await window.attendanceDB.updateRepitiente(item);
+            await refreshRepitientesTable();
+            await refreshMonthlySummary();
+            closeEditRecordModal();
+            showToast('Estudiante repitiente actualizado.');
+          }
+        });
+      }
+
       /* GESTIÓN DE INASISTENTES DEL DÍA */
       function renderInasistentesTable() {
         tbodyInasistentes.innerHTML = '';
@@ -2817,18 +3205,36 @@
             <td><strong>${escapeHtml(item.nombre)} ${escapeHtml(item.apellido)}</strong></td>
             <td>${escapeHtml(item.cedula || '-')}</td>
             <td style="font-size:11px; color:var(--text-muted);">${escapeHtml(item.razon || '-')}</td>
-            <td style="text-align:right;">
-              <button type="button" class="btn-del-item" data-idx="${idx}">🗑️</button>
+            <td style="text-align:right; white-space:nowrap;">
+              <button type="button" class="btn-edit-item" data-idx="${idx}" title="Editar">✏️</button>
+              <button type="button" class="btn-del-item" data-idx="${idx}" title="Eliminar">🗑️</button>
             </td>
           `;
           tbodyInasistentes.appendChild(tr);
         });
 
+        tbodyInasistentes.querySelectorAll('.btn-edit-item').forEach(b => {
+          b.addEventListener('click', () => {
+            const idx = parseInt(b.getAttribute('data-idx'));
+            openEditRecordModal('inasistente', idx);
+          });
+        });
+
         tbodyInasistentes.querySelectorAll('.btn-del-item').forEach(b => {
           b.addEventListener('click', () => {
-            const i = parseInt(b.getAttribute('data-idx'));
-            currentInasistentes.splice(i, 1);
-            renderInasistentesTable();
+            const idx = parseInt(b.getAttribute('data-idx'));
+            const item = currentInasistentes[idx];
+            const name = item ? `${item.nombre} ${item.apellido}` : 'este alumno';
+            openDeleteConfirm(`¿Está seguro de que desea eliminar a <strong>${escapeHtml(name)}</strong> de la lista de inasistentes de hoy?`, async () => {
+              currentInasistentes.splice(idx, 1);
+              const dailyRec = await window.attendanceDB.getDailyRecord(inputDate.value);
+              if (dailyRec) {
+                dailyRec.inasistentes = currentInasistentes;
+                await window.attendanceDB.saveDailyRecord(dailyRec);
+              }
+              renderInasistentesTable();
+              showToast('Alumno eliminado de la lista de inasistentes.');
+            });
           });
         });
       }
@@ -2873,16 +3279,32 @@
             <td style="text-align:center;">${escapeHtml(item.genero)}</td>
             <td>${escapeHtml(item.plantelProcedencia || '-')}</td>
             <td style="text-align:center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : '-'}</td>
-            <td><button type="button" class="btn-del-item" data-id="${item.id}">🗑️</button></td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button type="button" class="btn-edit-item" data-id="${item.id}" title="Editar">✏️</button>
+              <button type="button" class="btn-del-item" data-id="${item.id}" title="Eliminar">🗑️</button>
+            </td>
           `;
           tbodyIngresados.appendChild(tr);
         });
 
+        tbodyIngresados.querySelectorAll('.btn-edit-item').forEach(b => {
+          b.addEventListener('click', () => {
+            const id = b.getAttribute('data-id');
+            openEditRecordModal('ingresado', id);
+          });
+        });
+
         tbodyIngresados.querySelectorAll('.btn-del-item').forEach(b => {
-          b.addEventListener('click', async () => {
-            await window.attendanceDB.deleteIngresado(b.getAttribute('data-id'));
-            await refreshIngresadosTable();
-            showToast('Estudiante ingresado eliminado.');
+          b.addEventListener('click', () => {
+            const id = b.getAttribute('data-id');
+            const item = currentMonthIngresados.find(x => x.id == id);
+            const name = item ? item.nombreApellido : 'este estudiante';
+            openDeleteConfirm(`¿Está seguro de que desea eliminar al estudiante ingresado <strong>${escapeHtml(name)}</strong>?`, async () => {
+              await window.attendanceDB.deleteIngresado(id);
+              await refreshIngresadosTable();
+              await refreshMonthlySummary();
+              showToast('Estudiante ingresado eliminado.');
+            });
           });
         });
       }
@@ -2935,16 +3357,32 @@
             <td style="text-align:center;">${escapeHtml(item.genero)}</td>
             <td>${escapeHtml(item.plantelAceptacion || '-')}</td>
             <td style="text-align:center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : '-'}</td>
-            <td><button type="button" class="btn-del-item" data-id="${item.id}">🗑️</button></td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button type="button" class="btn-edit-item" data-id="${item.id}" title="Editar">✏️</button>
+              <button type="button" class="btn-del-item" data-id="${item.id}" title="Eliminar">🗑️</button>
+            </td>
           `;
           tbodyEgresados.appendChild(tr);
         });
 
+        tbodyEgresados.querySelectorAll('.btn-edit-item').forEach(b => {
+          b.addEventListener('click', () => {
+            const id = b.getAttribute('data-id');
+            openEditRecordModal('egresado', id);
+          });
+        });
+
         tbodyEgresados.querySelectorAll('.btn-del-item').forEach(b => {
-          b.addEventListener('click', async () => {
-            await window.attendanceDB.deleteEgresado(b.getAttribute('data-id'));
-            await refreshEgresadosTable();
-            showToast('Estudiante egresado eliminado.');
+          b.addEventListener('click', () => {
+            const id = b.getAttribute('data-id');
+            const item = currentMonthEgresados.find(x => x.id == id);
+            const name = item ? item.nombreApellido : 'este estudiante';
+            openDeleteConfirm(`¿Está seguro de que desea eliminar al estudiante egresado <strong>${escapeHtml(name)}</strong>?`, async () => {
+              await window.attendanceDB.deleteEgresado(id);
+              await refreshEgresadosTable();
+              await refreshMonthlySummary();
+              showToast('Estudiante egresado eliminado.');
+            });
           });
         });
       }
@@ -2996,16 +3434,32 @@
             <td>${escapeHtml(item.nombreApellido)}</td>
             <td style="text-align:center;">${escapeHtml(item.edad || '-')}</td>
             <td style="text-align:center; font-weight:bold;">${item.condicion}ª vez</td>
-            <td><button type="button" class="btn-del-item" data-id="${item.id}">🗑️</button></td>
+            <td style="text-align:right; white-space:nowrap;">
+              <button type="button" class="btn-edit-item" data-id="${item.id}" title="Editar">✏️</button>
+              <button type="button" class="btn-del-item" data-id="${item.id}" title="Eliminar">🗑️</button>
+            </td>
           `;
           tbodyRepitientes.appendChild(tr);
         });
 
+        tbodyRepitientes.querySelectorAll('.btn-edit-item').forEach(b => {
+          b.addEventListener('click', () => {
+            const id = b.getAttribute('data-id');
+            openEditRecordModal('repitiente', id);
+          });
+        });
+
         tbodyRepitientes.querySelectorAll('.btn-del-item').forEach(b => {
-          b.addEventListener('click', async () => {
-            await window.attendanceDB.deleteRepitiente(b.getAttribute('data-id'));
-            await refreshRepitientesTable();
-            showToast('Estudiante repitiente eliminado.');
+          b.addEventListener('click', () => {
+            const id = b.getAttribute('data-id');
+            const item = currentMonthRepitientes.find(x => x.id == id);
+            const name = item ? item.nombreApellido : 'este estudiante';
+            openDeleteConfirm(`¿Está seguro de que desea eliminar al estudiante repitiente <strong>${escapeHtml(name)}</strong>?`, async () => {
+              await window.attendanceDB.deleteRepitiente(id);
+              await refreshRepitientesTable();
+              await refreshMonthlySummary();
+              showToast('Estudiante repitiente eliminado.');
+            });
           });
         });
       }

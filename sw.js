@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asistencia-escolar-v1';
+const CACHE_NAME = 'asistencia-escolar-v1.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

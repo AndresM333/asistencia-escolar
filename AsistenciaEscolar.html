@@ -1097,6 +1097,16 @@
             📊 Exportar Excel (MPPE)
           </button>
         </div>
+
+        <!-- BOTONES DE ENVÍO Y COMPARTIR REPORTES (CORREO Y WHATSAPP) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+          <button type="button" id="btnSendReportEmail" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; padding: 12px; border-radius: var(--radius-md); font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 4px rgba(37,99,235,0.25);">
+            ✉️ Enviar a Correo (PDF + Excel)
+          </button>
+          <button type="button" id="btnShareWhatsApp" style="background: linear-gradient(135deg, #16a34a, #15803d); color: white; border: none; padding: 12px; border-radius: var(--radius-md); font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 4px rgba(22,163,74,0.25);">
+            💬 Compartir a WhatsApp
+          </button>
+        </div>
       </div>
 
       <!-- METRICAS Y PROMEDIOS -->
@@ -1793,7 +1803,7 @@
        2. EXPORTADOR A EXCEL (Idéntico a la planilla MPPE)
        ======================================================== */
     window.mppeExcelExport = {
-      generateReport: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
+      getReportBlob: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
         const fileName = `RESUMEN_ESTADISTICO_${monthName.toUpperCase()}_${year}.xls`;
 
         // Procesar filas de días de clase (Lunes a Viernes del mes seleccionado)
@@ -2221,6 +2231,11 @@
         `;
 
         const blob = new Blob(['\uFEFF' + template], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        return { blob, fileName };
+      },
+
+      generateReport: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
+        const { blob, fileName } = this.getReportBlob(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes);
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = fileName;
@@ -2234,6 +2249,266 @@
        3. EXPORTADOR A PDF (Impresión idéntica a la hoja escaneada)
        ======================================================== */
     window.mppePdfExport = {
+      getPdfBlob: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
+        const stream = [];
+
+        function esc(text) {
+          if (text === null || text === undefined) return '';
+          return String(text).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+        }
+
+        function text(font, size, x, y, str) {
+          const s = esc(str);
+          stream.push(`BT /${font} ${size} Tf ${x.toFixed(1)} ${y.toFixed(1)} Td (${s}) Tj ET`);
+        }
+
+        function rect(x, y, w, h, fill = null, stroke = '0 0 0') {
+          if (fill) stream.push(`${fill} rg ${x.toFixed(1)} ${y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re f`);
+          if (stroke) stream.push(`${stroke} RG 0.5 w ${x.toFixed(1)} ${y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)} re S`);
+        }
+
+        function line(x1, y1, x2, y2, stroke = '0 0 0', width = 0.5) {
+          stream.push(`${stroke} RG ${width} w ${x1.toFixed(1)} ${y1.toFixed(1)} m ${x2.toFixed(1)} ${y2.toFixed(1)} l S`);
+        }
+
+        const W = 1008, H = 612;
+        rect(15, 15, W - 30, H - 30, '1 1 1', '0.2 0.2 0.2');
+
+        text('F1', 11, W / 2 - 140, 582, 'REPÚBLICA BOLIVARIANA DE VENEZUELA');
+        text('F1', 10, W / 2 - 175, 570, 'MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN');
+        text('F1', 10, W / 2 - 130, 558, `RESUMEN ESTADÍSTICO MENSUAL DEL GRADO - ${monthName.toUpperCase()} ${year}`);
+
+        rect(25, 508, W - 50, 42, '0.96 0.98 1', '0.7 0.8 0.95');
+        text('F1', 8.5, 32, 536, 'Plantel:');
+        text('F2', 8.5, 70, 536, cfg.schoolName || 'U.E.N. República de Indonesia');
+        text('F1', 8.5, 380, 536, 'Código DEA:');
+        text('F2', 8.5, 440, 536, cfg.deaCode || 'OD 17441503');
+        text('F1', 8.5, 620, 536, 'Ubicación:');
+        text('F2', 8.5, 675, 536, cfg.schoolLocation || 'Valle Arriba - Baruta');
+
+        text('F1', 8.5, 32, 518, 'Docente:');
+        text('F2', 8.5, 75, 518, cfg.teacherName || 'Docente de Aula');
+        text('F1', 8.5, 380, 518, 'Grado / Sección:');
+        text('F2', 8.5, 455, 518, `${cfg.grade || ''} "${cfg.section || ''}"`);
+        text('F1', 8.5, 620, 518, 'Año Escolar:');
+        text('F2', 8.5, 680, 518, cfg.schoolYear || `${year}-${Number(year) + 1}`);
+
+        const leftX = 25, leftW = 335, tableY = 495;
+        rect(leftX, tableY - 16, leftW, 16, '0.12 0.25 0.69', null);
+        text('F1', 8.5, leftX + 100, tableY - 12, 'REGISTRO DIARIO DE ASISTENCIA');
+
+        const colX = [leftX, leftX + 30, leftX + 75, leftX + 140, leftX + 205, leftX + 275];
+        rect(leftX, tableY - 32, leftW, 16, '0.92 0.94 0.98', '0 0 0');
+        text('F1', 7.5, colX[0] + 8, tableY - 28, 'DÍA');
+        text('F1', 7.5, colX[1] + 8, tableY - 28, 'FECHA');
+        text('F1', 7.5, colX[2] + 12, tableY - 28, 'VARONES (V)');
+        text('F1', 7.5, colX[3] + 10, tableY - 28, 'HEMBRAS (H)');
+        text('F1', 7.5, colX[4] + 15, tableY - 28, 'TOTAL (T)');
+
+        const daysInMonth = new Date(year, monthNum, 0).getDate();
+        const dayLetters = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+        let curY = tableY - 32;
+        const rowH = 13.5;
+        let sumV = 0, sumH = 0, sumT = 0, countDiasHabiles = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dObj = new Date(year, monthNum - 1, d);
+          const dayWeek = dObj.getDay();
+          if (dayWeek === 0 || dayWeek === 6) continue;
+
+          countDiasHabiles++;
+          curY -= rowH;
+          const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const rec = dailyRecords.find(r => r.date === dateStr);
+          const fDate = `${String(d).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}`;
+          const dLetter = dayLetters[dayWeek];
+
+          rect(leftX, curY, leftW, rowH, (countDiasHabiles % 2 === 0 ? '0.98 0.98 0.98' : '1 1 1'), '0.8 0.8 0.8');
+          text('F1', 7, colX[0] + 10, curY + 3.5, dLetter);
+          text('F2', 7, colX[1] + 6, curY + 3.5, fDate);
+
+          if (rec && rec.isNoClass) {
+            rect(colX[2], curY, leftW - (colX[2] - leftX), rowH, '0.99 0.92 0.92', null);
+            let reason = (rec.noClassReason || 'Sin actividad').substring(0, 38);
+            text('F2', 6.5, colX[2] + 6, curY + 3.5, `* ${reason}`);
+          } else if (rec) {
+            const v = rec.ninos || 0, h = rec.ninas || 0, t = v + h;
+            sumV += v; sumH += h; sumT += t;
+            text('F2', 7, colX[2] + 25, curY + 3.5, String(v));
+            text('F2', 7, colX[3] + 25, curY + 3.5, String(h));
+            text('F1', 7, colX[4] + 25, curY + 3.5, String(t));
+          } else {
+            text('F2', 7, colX[2] + 25, curY + 3.5, '-');
+            text('F2', 7, colX[3] + 25, curY + 3.5, '-');
+            text('F2', 7, colX[4] + 25, curY + 3.5, '-');
+          }
+        }
+
+        curY -= 15;
+        rect(leftX, curY, leftW, 15, '0.9 0.93 0.98', '0.2 0.2 0.2');
+        text('F1', 7.5, leftX + 20, curY + 4, 'TOTAL ASISTENCIA DEL MES:');
+        text('F1', 8, colX[2] + 22, curY + 4, String(sumV));
+        text('F1', 8, colX[3] + 22, curY + 4, String(sumH));
+        text('F1', 8.5, colX[4] + 22, curY + 4, String(sumT));
+
+        const diasConClase = summary.diasConClase || (sumT > 0 ? 1 : 0);
+        const promV = diasConClase > 0 ? (sumV / diasConClase).toFixed(1) : '0';
+        const promH = diasConClase > 0 ? (sumH / diasConClase).toFixed(1) : '0';
+        const promT = diasConClase > 0 ? (sumT / diasConClase).toFixed(1) : '0';
+
+        const matIniV = Number(cfg.matriculaV || 0);
+        const matIniH = Number(cfg.matriculaH || 0);
+        const ingV = ingresados.filter(x => x.genero === 'V').length;
+        const ingH = ingresados.filter(x => x.genero === 'H').length;
+        const egV = egresados.filter(x => x.genero === 'V').length;
+        const egH = egresados.filter(x => x.genero === 'H').length;
+        const matFinV = Math.max(0, matIniV + ingV - egV);
+        const matFinH = Math.max(0, matIniH + ingH - egH);
+        const matFinT = matFinV + matFinH;
+
+        const diasHabiles = Number(cfg.diasHabiles || countDiasHabiles || 20);
+        const porcV = (matFinV > 0 && diasHabiles > 0) ? ((sumV / (matFinV * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+        const porcH = (matFinH > 0 && diasHabiles > 0) ? ((sumH / (matFinH * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+        const porcT = (matFinT > 0 && diasHabiles > 0) ? ((sumT / (matFinT * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
+
+        curY -= 40;
+        rect(leftX, curY, leftW, 36, '0.96 0.98 1', '0.7 0.8 0.95');
+        text('F1', 7.5, leftX + 8, curY + 24, `Días impartidos: ${diasConClase}  |  Días sin clase: ${summary.diasSinClase || 0}  |  Días hábiles: ${diasHabiles}`);
+        text('F1', 7.5, leftX + 8, curY + 13, `Promedio Asistencia: Total ${promT}  (V: ${promV}  /  H: ${promH})`);
+        text('F1', 7.5, leftX + 8, curY + 3, `Porcentaje Asistencia: Total ${porcT}  (V: ${porcV}  /  H: ${porcH})`);
+
+        const rightX = 375, rightW = W - rightX - 25;
+        let rightY = tableY - 16;
+
+        rect(rightX, rightY, rightW, 16, '0.12 0.25 0.69', null);
+        text('F1', 8, rightX + 220, rightY + 4, '1. MOVIMIENTO DE MATRÍCULA');
+        rightY -= 14;
+
+        rect(rightX, rightY, rightW, 14, '0.92 0.94 0.98', '0 0 0');
+        text('F1', 7, rightX + 8, rightY + 3.5, 'CONCEPTO');
+        text('F1', 7, rightX + 280, rightY + 3.5, 'VARONES (V)');
+        text('F1', 7, rightX + 390, rightY + 3.5, 'HEMBRAS (H)');
+        text('F1', 7, rightX + 510, rightY + 3.5, 'TOTAL (T)');
+
+        const matRows = [
+          ['Matrícula al 1º día del mes', matIniV, matIniH, matIniV + matIniH],
+          ['Estudiantes Ingresados durante el mes', ingV, ingH, ingV + ingH],
+          ['Estudiantes Extranjeros matriculados', cfg.extranjerosV || 0, cfg.extranjerosH || 0, (Number(cfg.extranjerosV) || 0) + (Number(cfg.extranjerosH) || 0)],
+          ['Estudiantes Retirados durante el mes', egV, egH, egV + egH],
+          ['Matrícula Final del mes', matFinV, matFinH, matFinT]
+        ];
+
+        matRows.forEach((r, idx) => {
+          rightY -= 13;
+          const isTotal = idx === 4;
+          rect(rightX, rightY, rightW, 13, (isTotal ? '0.9 0.95 0.9' : (idx % 2 === 0 ? '0.98 0.98 0.98' : '1 1 1')), '0.8 0.8 0.8');
+          text(isTotal ? 'F1' : 'F2', 7, rightX + 8, rightY + 3.5, r[0]);
+          text(isTotal ? 'F1' : 'F2', 7, rightX + 310, rightY + 3.5, String(r[1]));
+          text(isTotal ? 'F1' : 'F2', 7, rightX + 420, rightY + 3.5, String(r[2]));
+          text('F1', 7.5, rightX + 535, rightY + 3.5, String(r[3]));
+        });
+
+        rightY -= 20;
+        rect(rightX, rightY, rightW, 14, '0.12 0.25 0.69', null);
+        text('F1', 7.5, rightX + 8, rightY + 3.5, '2. INGRESADOS/AS (Máx 5)');
+        text('F1', 7.5, rightX + 210, rightY + 3.5, '3. EGRESADOS/AS (Máx 5)');
+        text('F1', 7.5, rightX + 420, rightY + 3.5, '4. REPITIENTES (Máx 5)');
+
+        rightY -= 12;
+        rect(rightX, rightY, rightW, 12, '0.92 0.94 0.98', '0 0 0');
+        text('F1', 6, rightX + 4, rightY + 3, 'Nombre / Procedencia / Fecha');
+        text('F1', 6, rightX + 208, rightY + 3, 'Nombre / Destino / Fecha');
+        text('F1', 6, rightX + 418, rightY + 3, 'Nombre / Edad / Vez');
+
+        for (let i = 0; i < 5; i++) {
+          rightY -= 13;
+          rect(rightX, rightY, rightW, 13, (i % 2 === 0 ? '0.98 0.98 0.98' : '1 1 1'), '0.85 0.85 0.85');
+          const ing = ingresados[i];
+          text('F2', 6.2, rightX + 4, rightY + 3.5, ing ? `${ing.nombreApellido || ''} (${ing.genero}) - ${(ing.plantelProcedencia || '').substring(0, 16)}` : '-');
+          const egr = egresados[i];
+          text('F2', 6.2, rightX + 208, rightY + 3.5, egr ? `${egr.nombreApellido || ''} (${egr.genero}) - ${(egr.plantelAceptacion || '').substring(0, 16)}` : '-');
+          const rep = repitientes[i];
+          text('F2', 6.2, rightX + 418, rightY + 3.5, rep ? `${rep.nombreApellido || ''} (${rep.edad || '-'}a) - ${rep.condicion}ª vez` : '-');
+        }
+
+        rightY -= 18;
+        rect(rightX, rightY, rightW, 14, '0.12 0.25 0.69', null);
+        text('F1', 7.5, rightX + 200, rightY + 3.5, '5. CLASIFICACIÓN POR EDAD Y GÉNERO');
+
+        rightY -= 13;
+        rect(rightX, rightY, rightW, 13, '0.92 0.94 0.98', '0 0 0');
+        const ages = cfg.edades || [
+          { edad: 3, v: 0, h: 0 }, { edad: 4, v: 0, h: 0 },
+          { edad: 5, v: 0, h: 0 }, { edad: 6, v: 0, h: 0 },
+          { edad: 7, v: 0, h: 0 }, { edad: 8, v: 0, h: 0 }
+        ];
+
+        let ageHeaderStr = 'EDADES: ';
+        let ageValsStr = 'ALUMNOS: ';
+        let totalAges = 0;
+        ages.forEach(a => {
+          const tot = (Number(a.v) || 0) + (Number(a.h) || 0);
+          totalAges += tot;
+          ageHeaderStr += `  [${a.edad} años]  `;
+          ageValsStr += `  V:${a.v || 0} H:${a.h || 0} (T:${tot})  `;
+        });
+        text('F1', 6.5, rightX + 6, rightY + 3.5, ageHeaderStr + `  |  TOTAL MATRÍCULA: ${totalAges}`);
+        rightY -= 13;
+        rect(rightX, rightY, rightW, 13, '1 1 1', '0.85 0.85 0.85');
+        text('F2', 6.5, rightX + 6, rightY + 3.5, ageValsStr);
+
+        const footY = 40;
+        line(30, footY + 45, W - 30, footY + 45, '0.6 0.6 0.6', 0.5);
+        text('F2', 8, 40, footY + 25, 'Fecha de entrega: _____ / _____ / _________');
+        line(180, footY + 10, 420, footY + 10, '0.2 0.2 0.2', 1);
+        text('F1', 8, 250, footY - 2, 'Firma del (de la) Docente');
+        line(600, footY + 10, 840, footY + 10, '0.2 0.2 0.2', 1);
+        text('F1', 8, 680, footY - 2, 'Firma Directivo');
+
+        const content = stream.join('\n');
+        const contentLen = content.length;
+
+        const obj1 = '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n';
+        const obj2 = '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n';
+        const obj3 = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>\nendobj\n`;
+        const obj4 = `4 0 obj\n<< /Length ${contentLen} >>\nstream\n${content}\nendstream\nendobj\n`;
+        const obj5 = '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>\nendobj\n';
+        const obj6 = '6 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n';
+
+        const header = '%PDF-1.4\n';
+        const body = obj1 + obj2 + obj3 + obj4 + obj5 + obj6;
+
+        const offsets = [
+          0,
+          header.length,
+          header.length + obj1.length,
+          header.length + obj1.length + obj2.length,
+          header.length + obj1.length + obj2.length + obj3.length,
+          header.length + obj1.length + obj2.length + obj3.length + obj4.length,
+          header.length + obj1.length + obj2.length + obj3.length + obj4.length + obj5.length
+        ];
+
+        let xref = 'xref\n0 7\n0000000000 65535 f \n';
+        for (let i = 1; i <= 6; i++) {
+          xref += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+        }
+
+        const startxref = header.length + body.length;
+        const trailer = `trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n${startxref}\n%%EOF\n`;
+
+        const fullPdfStr = header + body + xref + trailer;
+        const uint8 = new Uint8Array(fullPdfStr.length);
+        for (let i = 0; i < fullPdfStr.length; i++) {
+          uint8[i] = fullPdfStr.charCodeAt(i) & 0xFF;
+        }
+
+        const blob = new Blob([uint8], { type: 'application/pdf' });
+        return {
+          blob,
+          fileName: `RESUMEN_ESTADISTICO_${monthName.toUpperCase()}_${year}.pdf`
+        };
+      },
+
       generateAndPrintPDF: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
         const reportWindow = window.open('', '_blank');
 
@@ -3669,6 +3944,16 @@
       /* ========================================================
          5. MODAL DE DATOS PREVIOS ANTES DE EXPORTAR
          ======================================================== */
+            function downloadBlob(blob, fileName) {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      }
+
       async function prepareAndPromptExport(type) {
         pendingExportType = type;
         const y = selectYear.value;
@@ -3676,7 +3961,7 @@
         const records = await window.attendanceDB.getRecordsByMonthYear(y, m);
 
         if (records.length === 0) {
-          showToast('No hay registros en este mes para exportar.');
+          showToast('No hay registros de asistencia en este mes para generar reportes.');
           return;
         }
 
@@ -3688,6 +3973,22 @@
         promptMatriculaH.value = cfg.matriculaH || 0;
         promptExtranjerosV.value = cfg.extranjerosV || 0;
         promptExtranjerosH.value = cfg.extranjerosH || 0;
+
+        // Adaptar textos del modal según la acción elegida
+        const modalTitle = modalExportPrompt.querySelector('.modal-title');
+        if (modalTitle) {
+          if (type === 'email') modalTitle.textContent = '✉️ Enviar Reportes por Correo (PDF + Excel)';
+          else if (type === 'whatsapp') modalTitle.textContent = '💬 Compartir a WhatsApp (PDF + Excel)';
+          else if (type === 'pdf') modalTitle.textContent = '📄 Exportar Planilla Oficial PDF (MPPE)';
+          else modalTitle.textContent = '📊 Exportar Planilla Oficial Excel (MPPE)';
+        }
+
+        if (btnConfirmExport) {
+          if (type === 'email') btnConfirmExport.textContent = '✉️ Preparar y Enviar Correo con Archivos';
+          else if (type === 'whatsapp') btnConfirmExport.textContent = '💬 Compartir Reportes a WhatsApp Ahora';
+          else if (type === 'pdf') btnConfirmExport.textContent = '📄 Imprimir / Generar Planilla PDF';
+          else btnConfirmExport.textContent = '📊 Generar y Descargar Excel';
+        }
 
         // Renderizar edades en el modal
         renderPromptAges(cfg.edades || []);
@@ -3721,8 +4022,13 @@
         });
       }
 
+      const btnSendReportEmail = document.getElementById('btnSendReportEmail');
+      const btnShareWhatsApp = document.getElementById('btnShareWhatsApp');
+
       btnExportPDF.addEventListener('click', () => prepareAndPromptExport('pdf'));
       btnExportExcel.addEventListener('click', () => prepareAndPromptExport('excel'));
+      if (btnSendReportEmail) btnSendReportEmail.addEventListener('click', () => prepareAndPromptExport('email'));
+      if (btnShareWhatsApp) btnShareWhatsApp.addEventListener('click', () => prepareAndPromptExport('whatsapp'));
 
       btnCloseExportModal.addEventListener('click', () => {
         modalExportPrompt.classList.remove('active');
@@ -3772,9 +4078,141 @@
 
         if (pendingExportType === 'pdf') {
           window.mppePdfExport.generateAndPrintPDF(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
-        } else {
+        } else if (pendingExportType === 'excel') {
           window.mppeExcelExport.generateReport(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
           showToast('Informe de Excel generado exitosamente.');
+        } else if (pendingExportType === 'email') {
+          // 1. Obtener correo de destino guardado en el sistema
+          let targetEmail = (exportCfg.backupEmail || '').trim();
+          if (!targetEmail) {
+            targetEmail = prompt('Por favor ingrese el correo electrónico al cual se enviarán los reportes:');
+            if (targetEmail) {
+              targetEmail = targetEmail.trim();
+              exportCfg.backupEmail = targetEmail;
+              baseCfg.backupEmail = targetEmail;
+              await window.attendanceDB.saveConfig(baseCfg);
+              if (document.getElementById('inputBackupEmail')) {
+                document.getElementById('inputBackupEmail').value = targetEmail;
+              }
+            }
+          }
+
+          // 2. Generar ambos reportes (PDF y Excel)
+          const pdfData = window.mppePdfExport.getPdfBlob(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
+          const excelData = window.mppeExcelExport.getReportBlob(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
+
+          // 3. Métricas para el cuerpo del correo
+          let sumV = 0, sumH = 0;
+          records.forEach(r => { if (!r.isNoClass) { sumV += (r.ninos || 0); sumH += (r.ninas || 0); } });
+          const sumT = sumV + sumH;
+          const promT = summary.diasConClase > 0 ? (sumT / summary.diasConClase).toFixed(1) : '0';
+          const promV = summary.diasConClase > 0 ? (sumV / summary.diasConClase).toFixed(1) : '0';
+          const promH = summary.diasConClase > 0 ? (sumH / summary.diasConClase).toFixed(1) : '0';
+
+          const matIniV = Number(exportCfg.matriculaV || 0);
+          const matIniH = Number(exportCfg.matriculaH || 0);
+          const ingV = ingresados.filter(x => x.genero === 'V').length;
+          const ingH = ingresados.filter(x => x.genero === 'H').length;
+          const egV = egresados.filter(x => x.genero === 'V').length;
+          const egH = egresados.filter(x => x.genero === 'H').length;
+          const matFinV = Math.max(0, matIniV + ingV - egV);
+          const matFinH = Math.max(0, matIniH + ingH - egH);
+          const matFinT = matFinV + matFinH;
+
+          const diasHab = Number(exportCfg.diasHabiles || 20);
+          const porcT = (matFinT > 0 && diasHab > 0) ? ((sumT / (matFinT * diasHab)) * 100).toFixed(1) + '%' : '0%';
+
+          const mailSubject = `Resumen Estadístico Mensual Oficial MPPE - ${monthName} ${y} - ${exportCfg.schoolName || ''} - Grado: ${exportCfg.grade || ''} "${exportCfg.section || ''}"`;
+          const mailBody = `Hola,\n\nSe adjuntan los reportes oficiales correspondientes al mes de ${monthName} ${y} generados por el Sistema de Asistencia Escolar (MPPE Venezuela):\n\n1. Planilla Oficial en PDF: ${pdfData.fileName}\n2. Planilla Oficial en Excel: ${excelData.fileName}\n\nRESUMEN GENERAL DEL MES:\n• Institución: ${exportCfg.schoolName || ''} (Código DEA: ${exportCfg.deaCode || ''})\n• Docente: ${exportCfg.teacherName || ''}\n• Grado y Sección: ${exportCfg.grade || ''} "${exportCfg.section || ''}" | Año Escolar: ${exportCfg.schoolYear || ''}\n• Días impartidos: ${summary.diasConClase} | Días sin clase: ${summary.diasSinClase}\n• Promedio Diario de Asistencia: Total ${promT} (Varones: ${promV} / Hembras: ${promH})\n• Matrícula Final: Total ${matFinT} (Varones: ${matFinV} / Hembras: ${matFinH})\n• Porcentaje de Asistencia: ${porcT}\n• Movimientos: ${ingV + ingH} Ingresados / ${egV + egH} Egresados / ${repitientes.length} Repitientes\n\nFecha de generación: ${new Date().toLocaleString()}\n`;
+
+          const pdfFile = new File([pdfData.blob], pdfData.fileName, { type: 'application/pdf' });
+          const excelFile = new File([excelData.blob], excelData.fileName, { type: 'application/vnd.ms-excel' });
+
+          // Intentar compartir con archivos nativos si el navegador / móvil lo admite
+          if (navigator.canShare && navigator.canShare({ files: [pdfFile, excelFile] })) {
+            try {
+              await navigator.share({
+                title: mailSubject,
+                text: `Para: ${targetEmail || 'Correo de Respaldo'}\n\n${mailBody}`,
+                files: [pdfFile, excelFile]
+              });
+              showToast('Reportes compartidos por correo exitosamente.');
+              return;
+            } catch (err) {
+              if (err.name === 'AbortError') return;
+              console.log('Compartir nativo no completado, usando descarga y mailto:', err);
+            }
+          }
+
+          // Descarga de archivos y apertura de mailto
+          downloadBlob(pdfData.blob, pdfData.fileName);
+          downloadBlob(excelData.blob, excelData.fileName);
+
+          const mailto = `mailto:${encodeURIComponent(targetEmail || '')}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(mailBody + '\n(Por favor adjunte los dos archivos recién descargados en este correo)')}`;
+          window.location.href = mailto;
+          showToast(`Reportes descargados. Abriendo gestor de correo para ${targetEmail || 'enviar'}...`);
+        } else if (pendingExportType === 'whatsapp') {
+          // Generar ambos reportes (PDF y Excel)
+          const pdfData = window.mppePdfExport.getPdfBlob(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
+          const excelData = window.mppeExcelExport.getReportBlob(y, m, monthName, records, summary, exportCfg, ingresados, egresados, repitientes);
+
+          // Métricas para WhatsApp
+          let sumV = 0, sumH = 0;
+          records.forEach(r => { if (!r.isNoClass) { sumV += (r.ninos || 0); sumH += (r.ninas || 0); } });
+          const sumT = sumV + sumH;
+          const promT = summary.diasConClase > 0 ? (sumT / summary.diasConClase).toFixed(1) : '0';
+          const promV = summary.diasConClase > 0 ? (sumV / summary.diasConClase).toFixed(1) : '0';
+          const promH = summary.diasConClase > 0 ? (sumH / summary.diasConClase).toFixed(1) : '0';
+
+          const matIniV = Number(exportCfg.matriculaV || 0);
+          const matIniH = Number(exportCfg.matriculaH || 0);
+          const ingV = ingresados.filter(x => x.genero === 'V').length;
+          const ingH = ingresados.filter(x => x.genero === 'H').length;
+          const egV = egresados.filter(x => x.genero === 'V').length;
+          const egH = egresados.filter(x => x.genero === 'H').length;
+          const matFinV = Math.max(0, matIniV + ingV - egV);
+          const matFinH = Math.max(0, matIniH + ingH - egH);
+          const matFinT = matFinV + matFinH;
+          const diasHab = Number(exportCfg.diasHabiles || 20);
+          const porcT = (matFinT > 0 && diasHab > 0) ? ((sumT / (matFinT * diasHab)) * 100).toFixed(1) + '%' : '0%';
+
+          const waText = `📊 *RESUMEN ESTADÍSTICO MENSUAL MPPE - ${monthName.toUpperCase()} ${y}*\n` +
+            `🏫 *Plantel:* ${exportCfg.schoolName || ''} (${exportCfg.deaCode || ''})\n` +
+            `👩‍🏫 *Docente:* ${exportCfg.teacherName || ''} | *Grado:* ${exportCfg.grade || ''} "${exportCfg.section || ''}"\n\n` +
+            `📌 *Estadísticas Oficiales:*\n` +
+            `• Días impartidos: ${summary.diasConClase} | Días sin clase: ${summary.diasSinClase}\n` +
+            `• Promedio Asistencia: Total ${promT} (V: ${promV} / H: ${promH})\n` +
+            `• Matrícula Final: Total ${matFinT} (V: ${matFinV} / H: ${matFinH})\n` +
+            `• % de Asistencia: ${porcT}\n` +
+            `• Movimientos: ${ingV + ingH} Ingresados / ${egV + egH} Egresados / ${repitientes.length} Repitientes\n\n` +
+            `📁 _Se adjuntan los reportes oficiales correspondientes en formato PDF (${pdfData.fileName}) y Excel (${excelData.fileName})._`;
+
+          const pdfFile = new File([pdfData.blob], pdfData.fileName, { type: 'application/pdf' });
+          const excelFile = new File([excelData.blob], excelData.fileName, { type: 'application/vnd.ms-excel' });
+
+          // Intentar compartir con archivos nativos directamente a WhatsApp
+          if (navigator.canShare && navigator.canShare({ files: [pdfFile, excelFile] })) {
+            try {
+              await navigator.share({
+                title: `Reportes Oficiales MPPE - ${monthName} ${y}`,
+                text: waText,
+                files: [pdfFile, excelFile]
+              });
+              showToast('Reportes compartidos a WhatsApp.');
+              return;
+            } catch (err) {
+              if (err.name === 'AbortError') return;
+              console.log('Compartir nativo a WhatsApp no completado:', err);
+            }
+          }
+
+          // Descarga de archivos y apertura de WhatsApp Web/App
+          downloadBlob(pdfData.blob, pdfData.fileName);
+          downloadBlob(excelData.blob, excelData.fileName);
+
+          const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
+          window.open(waUrl, '_blank');
+          showToast('Archivos PDF y Excel descargados. Abriendo WhatsApp...');
         }
       });
 

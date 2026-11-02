@@ -1805,424 +1805,446 @@
     window.mppeExcelExport = {
       getReportBlob: function(year, monthNum, monthName, dailyRecords, summary, cfg, ingresados, egresados, repitientes) {
         const fileName = `RESUMEN_ESTADISTICO_${monthName.toUpperCase()}_${year}.xls`;
-
-        // Procesar filas de días de clase (Lunes a Viernes del mes seleccionado)
         const daysInMonth = new Date(year, monthNum, 0).getDate();
-        let rowsDailyHtml = '';
         const dayLetters = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
 
+        // 1. Preparar lista de filas del lado izquierdo (Registro diario)
+        const leftRows = [];
         let sumV = 0, sumH = 0, sumT = 0;
+        let countDiasHabiles = 0;
 
         for (let d = 1; d <= daysInMonth; d++) {
-          const dateObj = new Date(year, monthNum - 1, d);
-          const dayWeek = dateObj.getDay();
-          if (dayWeek === 0 || dayWeek === 6) continue; // Excluir fin de semana
+          const dObj = new Date(year, monthNum - 1, d);
+          const dayWeek = dObj.getDay();
+          if (dayWeek === 0 || dayWeek === 6) continue;
 
-          const dayLetter = dayLetters[dayWeek];
+          countDiasHabiles++;
           const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          const formattedDate = `${String(d).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}`;
+          const rec = dailyRecords.find(r => r.date === dateStr);
+          const fDate = `${String(d).padStart(2, '0')}/${String(monthNum).padStart(2, '0')}`;
+          const dLetter = dayLetters[dayWeek];
 
-          const record = dailyRecords.find(r => r.date === dateStr);
-
-          if (record && record.isNoClass) {
-            // DÍA SIN CLASES: FUSIONAR 3 CELDAS (V, H, T) CON EL MOTIVO
-            let reasonText = (record.noClassReason || 'Sin actividad escolar').trim();
-            // Truncar si es muy largo para no romper la estética
-            if (reasonText.length > 45) {
-              reasonText = reasonText.substring(0, 42) + '...';
-            }
-            rowsDailyHtml += `
-              <tr style="height: 22px;">
-                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${dayLetter}</td>
-                <td style="border: 1px solid black; text-align: center;">${formattedDate}</td>
-                <td colspan="3" style="border: 1px solid black; text-align: center; font-size: 10px; font-style: italic; background-color: #fee2e2; color: #991b1b; padding: 2px;">${reasonText}</td>
-              </tr>
-            `;
-          } else if (record) {
-            const v = record.ninos || 0;
-            const h = record.ninas || 0;
+          if (rec && rec.isNoClass) {
+            let reason = (rec.noClassReason || 'Sin actividad escolar').trim();
+            if (reason.length > 40) reason = reason.substring(0, 37) + '...';
+            leftRows.push({
+              type: 'noclass',
+              letter: dLetter,
+              date: fDate,
+              reason: reason
+            });
+          } else if (rec) {
+            const v = rec.ninos || 0;
+            const h = rec.ninas || 0;
             const t = v + h;
             sumV += v; sumH += h; sumT += t;
-            rowsDailyHtml += `
-              <tr style="height: 22px;">
-                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${dayLetter}</td>
-                <td style="border: 1px solid black; text-align: center;">${formattedDate}</td>
-                <td style="border: 1px solid black; text-align: center;">${v}</td>
-                <td style="border: 1px solid black; text-align: center;">${h}</td>
-                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${t}</td>
-              </tr>
-            `;
+            leftRows.push({
+              type: 'class',
+              letter: dLetter,
+              date: fDate,
+              v: v,
+              h: h,
+              t: t
+            });
           } else {
-            // Día lectivo sin registro aún
-            rowsDailyHtml += `
-              <tr style="height: 22px;">
-                <td style="border: 1px solid black; text-align: center; font-weight: bold;">${dayLetter}</td>
-                <td style="border: 1px solid black; text-align: center;">${formattedDate}</td>
-                <td style="border: 1px solid black; text-align: center;"></td>
-                <td style="border: 1px solid black; text-align: center;"></td>
-                <td style="border: 1px solid black; text-align: center;"></td>
-              </tr>
-            `;
+            leftRows.push({
+              type: 'empty',
+              letter: dLetter,
+              date: fDate,
+              v: '',
+              h: '',
+              t: ''
+            });
           }
         }
 
-        // Fila Total
-        rowsDailyHtml += `
-          <tr style="height: 24px; font-weight: bold; background-color: #f1f5f9;">
-            <td colspan="2" style="border: 1px solid black; text-align: center;">Total</td>
-            <td style="border: 1px solid black; text-align: center;">${sumV}</td>
-            <td style="border: 1px solid black; text-align: center;">${sumH}</td>
-            <td style="border: 1px solid black; text-align: center;">${sumT}</td>
-          </tr>
-        `;
+        // Cálculos de resumen
+        const diasConClase = summary.diasConClase || (sumT > 0 ? 1 : 0);
+        const promV = diasConClase > 0 ? (sumV / diasConClase).toFixed(1) : '0';
+        const promH = diasConClase > 0 ? (sumH / diasConClase).toFixed(1) : '0';
+        const promT = diasConClase > 0 ? (sumT / diasConClase).toFixed(1) : '0';
 
-        // Cuadro ASISTENCIA (Promedio y Porcentaje)
-        const totalDiasConClase = summary.diasConClase || (sumT > 0 ? 1 : 0);
-        const promV = totalDiasConClase > 0 ? (sumV / totalDiasConClase).toFixed(1) : '0';
-        const promH = totalDiasConClase > 0 ? (sumH / totalDiasConClase).toFixed(1) : '0';
-        const promT = totalDiasConClase > 0 ? (sumT / totalDiasConClase).toFixed(1) : '0';
-
-        // Movimientos
         const matIniV = Number(cfg.matriculaV || 0);
         const matIniH = Number(cfg.matriculaH || 0);
-        const matIniT = matIniV + matIniH;
-
         const ingV = ingresados.filter(x => x.genero === 'V').length;
         const ingH = ingresados.filter(x => x.genero === 'H').length;
-        const ingT = ingV + ingH;
-
-        const extV = Number(cfg.extranjerosV || 0);
-        const extH = Number(cfg.extranjerosH || 0);
-        const extT = extV + extH;
-
         const egV = egresados.filter(x => x.genero === 'V').length;
         const egH = egresados.filter(x => x.genero === 'H').length;
-        const egT = egV + egH;
-
         const matFinV = Math.max(0, matIniV + ingV - egV);
         const matFinH = Math.max(0, matIniH + ingH - egH);
         const matFinT = matFinV + matFinH;
 
-        const diasHabiles = Number(cfg.diasHabiles || 20);
+        const diasHabiles = Number(cfg.diasHabiles || countDiasHabiles || 20);
         const porcV = (matFinV > 0 && diasHabiles > 0) ? ((sumV / (matFinV * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
         const porcH = (matFinH > 0 && diasHabiles > 0) ? ((sumH / (matFinH * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
         const porcT = (matFinT > 0 && diasHabiles > 0) ? ((sumT / (matFinT * diasHabiles)) * 100).toFixed(1) + '%' : '0%';
 
-        // Cuadro Ingresados (Mínimo 3, Máximo 5)
-        let rowsIngresados = '';
-        for (let i = 0; i < Math.max(3, Math.min(5, ingresados.length)); i++) {
+        // 2. Preparar bloques del lado derecho
+        const rightRows = [];
+
+        // Bloque 1: Movimiento de Matrícula
+        rightRows.push({ type: 'header', text: '1. MOVIMIENTO DE MATRÍCULA' });
+        rightRows.push({ type: 'sub_mat', col1: 'CONCEPTO', col2: 'V', col3: 'H', col4: 'TOTAL' });
+        rightRows.push({ type: 'data_mat', c1: 'Matrícula al 1º día del mes', v: matIniV, h: matIniH, t: matIniV + matIniH });
+        rightRows.push({ type: 'data_mat', c1: 'Estudiantes Ingresados durante el mes', v: ingV, h: ingH, t: ingV + ingH });
+        rightRows.push({ type: 'data_mat', c1: 'Estudiantes Extranjeros matriculados', v: cfg.extranjerosV || 0, h: cfg.extranjerosH || 0, t: (Number(cfg.extranjerosV) || 0) + (Number(cfg.extranjerosH) || 0) });
+        rightRows.push({ type: 'data_mat', c1: 'Estudiantes Retirados durante el mes', v: egV, h: egH, t: egV + egH });
+        rightRows.push({ type: 'data_mat_total', c1: 'Matrícula Final del mes', v: matFinV, h: matFinH, t: matFinT });
+
+        rightRows.push({ type: 'spacer' });
+
+        // Bloque 2: Ingresados
+        rightRows.push({ type: 'header', text: '2. ESTUDIANTES INGRESADOS/AS (Máximo 5 al mes)' });
+        rightRows.push({ type: 'sub_ing', c1: 'Nombre y Apellido', c2: 'Gen', c3: 'Plantel de Procedencia', c4: 'Fecha/In' });
+        for (let i = 0; i < 5; i++) {
           const item = ingresados[i] || {};
-          rowsIngresados += `
-            <tr style="height: 20px;">
-              <td style="border: 1px solid black; padding-left: 4px;">${item.nombreApellido || ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${item.genero || ''}</td>
-              <td style="border: 1px solid black; padding-left: 4px;">${item.plantelProcedencia || ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : ''}</td>
-            </tr>
-          `;
+          rightRows.push({
+            type: 'data_ing',
+            c1: item.nombreApellido || '',
+            c2: item.genero || '',
+            c3: item.plantelProcedencia || '',
+            c4: item.fecha ? item.fecha.split('-').reverse().join('/') : ''
+          });
         }
 
-        // Cuadro Egresados (Mínimo 3, Máximo 5)
-        let rowsEgresados = '';
-        for (let i = 0; i < Math.max(3, Math.min(5, egresados.length)); i++) {
+        rightRows.push({ type: 'spacer' });
+
+        // Bloque 3: Egresados
+        rightRows.push({ type: 'header', text: '3. ESTUDIANTES EGRESADOS/AS (Máximo 5 al mes)' });
+        rightRows.push({ type: 'sub_egr', c1: 'Nombre y Apellido', c2: 'Gen', c3: 'Plantel Aceptación de Cupo', c4: 'Fecha/Eg' });
+        for (let i = 0; i < 5; i++) {
           const item = egresados[i] || {};
-          rowsEgresados += `
-            <tr style="height: 20px;">
-              <td style="border: 1px solid black; padding-left: 4px;">${item.nombreApellido || ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${item.genero || ''}</td>
-              <td style="border: 1px solid black; padding-left: 4px;">${item.plantelAceptacion || ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${item.fecha ? item.fecha.split('-').reverse().join('/') : ''}</td>
-            </tr>
-          `;
+          rightRows.push({
+            type: 'data_egr',
+            c1: item.nombreApellido || '',
+            c2: item.genero || '',
+            c3: item.plantelAceptacion || '',
+            c4: item.fecha ? item.fecha.split('-').reverse().join('/') : ''
+          });
         }
 
-        // Cuadro Repitientes (Mínimo 3, Máximo 5)
-        let rowsRepitientes = '';
-        for (let i = 0; i < Math.max(3, Math.min(5, repitientes.length)); i++) {
+        rightRows.push({ type: 'spacer' });
+
+        // Bloque 4: Repitientes
+        rightRows.push({ type: 'header', text: '4. ESTUDIANTES REPITIENTES (Máximo 5 al mes)' });
+        rightRows.push({ type: 'sub_rep', c1: 'Nombre y Apellido', c2: 'Edad', c3: '1º vez', c4: '2º vez', c5: '3º vez' });
+        for (let i = 0; i < 5; i++) {
           const item = repitientes[i] || {};
-          const v1 = (item.condicion === '1') ? 'X' : '';
-          const v2 = (item.condicion === '2') ? 'X' : '';
-          const v3 = (item.condicion === '3') ? 'X' : '';
-          rowsRepitientes += `
-            <tr style="height: 20px;">
-              <td style="border: 1px solid black; padding-left: 4px;">${item.nombreApellido || ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${item.edad || ''}</td>
-              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${v1}</td>
-              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${v2}</td>
-              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${v3}</td>
-            </tr>
-          `;
+          rightRows.push({
+            type: 'data_rep',
+            c1: item.nombreApellido || '',
+            c2: item.edad || '',
+            v1: item.condicion === '1' ? 'X' : '',
+            v2: item.condicion === '2' ? 'X' : '',
+            v3: item.condicion === '3' ? 'X' : ''
+          });
         }
 
-        // Cuadro Edades (Dividido en dos columnas de edades)
+        rightRows.push({ type: 'spacer' });
+
+        // Bloque 5: Edades
+        rightRows.push({ type: 'header', text: '5. CLASIFICACIÓN POR EDAD Y GÉNERO' });
+        rightRows.push({ type: 'sub_edad' });
         const edadesList = cfg.edades || [];
         const half = Math.ceil(edadesList.length / 2);
-        let rowsEdades = '';
-        let totalEdadesV = 0, totalEdadesH = 0, totalEdadesT = 0;
-
-        for (let i = 0; i < half; i++) {
+        for (let i = 0; i < Math.max(3, half); i++) {
           const e1 = edadesList[i] || {};
           const e2 = edadesList[i + half] || {};
+          const v1 = Number(e1.v || 0), h1 = Number(e1.h || 0);
+          const v2 = Number(e2.v || 0), h2 = Number(e2.h || 0);
+          rightRows.push({
+            type: 'data_edad',
+            ed1: e1.edad !== undefined ? e1.edad : '',
+            v1: e1.edad !== undefined ? v1 : '',
+            h1: e1.edad !== undefined ? h1 : '',
+            t1: e1.edad !== undefined ? v1 + h1 : '',
+            ed2: e2.edad !== undefined ? e2.edad : '',
+            v2: e2.edad !== undefined ? v2 : '',
+            h2: e2.edad !== undefined ? h2 : '',
+            t2: e2.edad !== undefined ? v2 + h2 : ''
+          });
+        }
 
-          const v1 = Number(e1.v || 0), h1 = Number(e1.h || 0), t1 = v1 + h1;
-          const v2 = Number(e2.v || 0), h2 = Number(e2.h || 0), t2 = v2 + h2;
+        // Emparejar filas de ambos lados en un solo grid simétrico
+        const leftExtended = [...leftRows];
+        leftExtended.push({ type: 'total', sumV, sumH, sumT });
+        leftExtended.push({ type: 'metrics_dias', conClase: diasConClase, sinClase: summary.diasSinClase || 0, habiles: diasHabiles });
+        leftExtended.push({ type: 'metrics_prom', promV, promH, promT });
+        leftExtended.push({ type: 'metrics_porc', porcV, porcH, porcT });
 
-          if (e1.edad !== undefined) { totalEdadesV += v1; totalEdadesH += h1; totalEdadesT += t1; }
-          if (e2.edad !== undefined) { totalEdadesV += v2; totalEdadesH += h2; totalEdadesT += t2; }
+        const totalGridRows = Math.max(leftExtended.length, rightRows.length);
 
-          rowsEdades += `
-            <tr style="height: 19px;">
-              <td style="border: 1px solid black; text-align: center; font-weight: bold;">${e1.edad !== undefined ? e1.edad : ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${e1.edad !== undefined ? v1 : ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${e1.edad !== undefined ? h1 : ''}</td>
-              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${e1.edad !== undefined ? t1 : ''}</td>
-              
-              <td style="border: 1px solid black; text-align: center; font-weight: bold;">${e2.edad !== undefined ? e2.edad : ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${e2.edad !== undefined ? v2 : ''}</td>
-              <td style="border: 1px solid black; text-align: center;">${e2.edad !== undefined ? h2 : ''}</td>
-              <td style="border: 1px solid black; text-align: center; font-weight:bold;">${e2.edad !== undefined ? t2 : ''}</td>
-            </tr>
-          `;
+        let tableRowsHtml = '';
+
+        for (let idx = 0; idx < totalGridRows; idx++) {
+          const left = leftExtended[idx];
+          const right = rightRows[idx];
+
+          tableRowsHtml += '<tr style="height: 20px;">';
+
+          // 1. Lado Izquierdo (Cols A-E)
+          if (!left) {
+            tableRowsHtml += '<td colspan="5" style="border: none;"></td>';
+          } else if (left.type === 'noclass') {
+            tableRowsHtml += `
+              <td class="b-all text-center font-bold">${left.letter}</td>
+              <td class="b-all text-center">${left.date}</td>
+              <td colspan="3" class="b-all text-center bg-noclass" style="font-size: 8.5pt;">${left.reason}</td>
+            `;
+          } else if (left.type === 'class') {
+            tableRowsHtml += `
+              <td class="b-all text-center font-bold">${left.letter}</td>
+              <td class="b-all text-center">${left.date}</td>
+              <td class="b-all text-center">${left.v}</td>
+              <td class="b-all text-center">${left.h}</td>
+              <td class="b-all text-center font-bold">${left.t}</td>
+            `;
+          } else if (left.type === 'empty') {
+            tableRowsHtml += `
+              <td class="b-all text-center font-bold">${left.letter}</td>
+              <td class="b-all text-center">${left.date}</td>
+              <td class="b-all text-center"></td>
+              <td class="b-all text-center"></td>
+              <td class="b-all text-center"></td>
+            `;
+          } else if (left.type === 'total') {
+            tableRowsHtml += `
+              <td colspan="2" class="b-all text-center font-bold bg-total">TOTAL</td>
+              <td class="b-all text-center font-bold bg-total">${left.sumV}</td>
+              <td class="b-all text-center font-bold bg-total">${left.sumH}</td>
+              <td class="b-all text-center font-bold bg-total">${left.sumT}</td>
+            `;
+          } else if (left.type === 'metrics_dias') {
+            tableRowsHtml += `
+              <td colspan="2" class="b-all text-left font-bold bg-sub" style="font-size: 8pt;">Días Impartidos:</td>
+              <td class="b-all text-center font-bold bg-sub">${left.conClase}</td>
+              <td class="b-all text-center font-bold bg-sub" style="font-size: 8pt;">Sin Clase:</td>
+              <td class="b-all text-center font-bold bg-sub">${left.sinClase}</td>
+            `;
+          } else if (left.type === 'metrics_prom') {
+            tableRowsHtml += `
+              <td colspan="2" class="b-all text-left font-bold bg-sub" style="font-size: 8pt;">Promedio Asistencia:</td>
+              <td class="b-all text-center bg-sub">${left.promV}</td>
+              <td class="b-all text-center bg-sub">${left.promH}</td>
+              <td class="b-all text-center font-bold bg-sub">${left.promT}</td>
+            `;
+          } else if (left.type === 'metrics_porc') {
+            tableRowsHtml += `
+              <td colspan="2" class="b-all text-left font-bold bg-sub" style="font-size: 8pt;">% de Asistencia:</td>
+              <td class="b-all text-center bg-sub">${left.porcV}</td>
+              <td class="b-all text-center bg-sub">${left.porcH}</td>
+              <td class="b-all text-center font-bold bg-sub">${left.porcT}</td>
+            `;
+          }
+
+          // Separador F
+          tableRowsHtml += '<td style="border: none;"></td>';
+
+          // 2. Lado Derecho (Cols G-N)
+          if (!right) {
+            tableRowsHtml += '<td colspan="8" style="border: none;"></td>';
+          } else if (right.type === 'header') {
+            tableRowsHtml += `<td colspan="8" class="b-all font-bold text-center bg-blue" style="font-size: 9pt;">${right.text}</td>`;
+          } else if (right.type === 'spacer') {
+            tableRowsHtml += '<td colspan="8" style="height: 6px; border: none;"></td>';
+          } else if (right.type === 'sub_mat') {
+            tableRowsHtml += `
+              <td colspan="5" class="b-all font-bold bg-gray-sub text-left" style="padding-left: 6px;">${right.col1}</td>
+              <td class="b-all font-bold bg-gray-sub text-center">${right.col2}</td>
+              <td class="b-all font-bold bg-gray-sub text-center">${right.col3}</td>
+              <td class="b-all font-bold bg-gray-sub text-center">${right.col4}</td>
+            `;
+          } else if (right.type === 'data_mat') {
+            tableRowsHtml += `
+              <td colspan="5" class="b-all text-left" style="padding-left: 6px;">${right.c1}</td>
+              <td class="b-all text-center">${right.v}</td>
+              <td class="b-all text-center">${right.h}</td>
+              <td class="b-all text-center font-bold">${right.t}</td>
+            `;
+          } else if (right.type === 'data_mat_total') {
+            tableRowsHtml += `
+              <td colspan="5" class="b-all text-left font-bold bg-total" style="padding-left: 6px;">${right.c1}</td>
+              <td class="b-all text-center font-bold bg-total">${right.v}</td>
+              <td class="b-all text-center font-bold bg-total">${right.h}</td>
+              <td class="b-all text-center font-bold bg-total">${right.t}</td>
+            `;
+          } else if (right.type === 'sub_ing' || right.type === 'sub_egr') {
+            tableRowsHtml += `
+              <td colspan="3" class="b-all font-bold bg-gray-sub text-left" style="padding-left: 6px;">${right.c1}</td>
+              <td class="b-all font-bold bg-gray-sub text-center">${right.c2}</td>
+              <td colspan="2" class="b-all font-bold bg-gray-sub text-left" style="padding-left: 6px;">${right.c3}</td>
+              <td colspan="2" class="b-all font-bold bg-gray-sub text-center">${right.c4}</td>
+            `;
+          } else if (right.type === 'data_ing' || right.type === 'data_egr') {
+            tableRowsHtml += `
+              <td colspan="3" class="b-all text-left" style="padding-left: 6px; font-size: 8.5pt;">${right.c1}</td>
+              <td class="b-all text-center">${right.c2}</td>
+              <td colspan="2" class="b-all text-left" style="padding-left: 6px; font-size: 8.5pt;">${right.c3}</td>
+              <td colspan="2" class="b-all text-center">${right.c4}</td>
+            `;
+          } else if (right.type === 'sub_rep') {
+            tableRowsHtml += `
+              <td colspan="3" class="b-all font-bold bg-gray-sub text-left" style="padding-left: 6px;">${right.c1}</td>
+              <td class="b-all font-bold bg-gray-sub text-center">${right.c2}</td>
+              <td colspan="2" class="b-all font-bold bg-gray-sub text-center">${right.c3}</td>
+              <td class="b-all font-bold bg-gray-sub text-center">${right.c4}</td>
+              <td class="b-all font-bold bg-gray-sub text-center">${right.c5}</td>
+            `;
+          } else if (right.type === 'data_rep') {
+            tableRowsHtml += `
+              <td colspan="3" class="b-all text-left" style="padding-left: 6px; font-size: 8.5pt;">${right.c1}</td>
+              <td class="b-all text-center">${right.c2}</td>
+              <td colspan="2" class="b-all text-center font-bold">${right.v1}</td>
+              <td class="b-all text-center font-bold">${right.v2}</td>
+              <td class="b-all text-center font-bold">${right.v3}</td>
+            `;
+          } else if (right.type === 'sub_edad') {
+            tableRowsHtml += `
+              <td class="b-all font-bold bg-gray-sub text-center">Edad</td>
+              <td class="b-all font-bold bg-gray-sub text-center">V</td>
+              <td class="b-all font-bold bg-gray-sub text-center">H</td>
+              <td class="b-all font-bold bg-gray-sub text-center">Total</td>
+              <td class="b-all font-bold bg-gray-sub text-center">Edad</td>
+              <td class="b-all font-bold bg-gray-sub text-center">V</td>
+              <td class="b-all font-bold bg-gray-sub text-center">H</td>
+              <td class="b-all font-bold bg-gray-sub text-center">Total</td>
+            `;
+          } else if (right.type === 'data_edad') {
+            tableRowsHtml += `
+              <td class="b-all text-center font-bold">${right.ed1}</td>
+              <td class="b-all text-center">${right.v1}</td>
+              <td class="b-all text-center">${right.h1}</td>
+              <td class="b-all text-center font-bold">${right.t1}</td>
+              <td class="b-all text-center font-bold">${right.ed2}</td>
+              <td class="b-all text-center">${right.v2}</td>
+              <td class="b-all text-center">${right.h2}</td>
+              <td class="b-all text-center font-bold">${right.t2}</td>
+            `;
+          }
+
+          tableRowsHtml += '</tr>';
         }
 
         const template = `
           <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
           <head>
             <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+            <!--[if gte mso 9]>
+            <xml>
+              <x:ExcelWorkbook>
+                <x:ExcelWorksheets>
+                  <x:ExcelWorksheet>
+                    <x:Name>Resumen Estadístico MPPE</x:Name>
+                    <x:WorksheetOptions>
+                      <x:Print>
+                        <x:ValidPrinterInfo/>
+                        <x:PaperSizeIndex>5</x:PaperSizeIndex>
+                        <x:Orientation>Landscape</x:Orientation>
+                      </x:Print>
+                      <x:Selected/>
+                      <x:DisplayGridlines/>
+                    </x:WorksheetOptions>
+                  </x:ExcelWorksheet>
+                </x:ExcelWorksheets>
+              </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
             <style>
-              body { font-family: 'Arial', sans-serif; font-size: 11px; }
+              body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; }
               table { border-collapse: collapse; }
-              .header-table td { font-size: 10px; }
-              .title-main { font-size: 14px; font-weight: bold; text-align: center; padding: 6px; }
-              .sub-title-table { width: 100%; margin-bottom: 8px; font-size: 11px; font-weight: bold; }
-              .table-section-title { background-color: #f1f5f9; font-weight: bold; text-align: center; border: 1px solid black; font-size: 11px; }
-              .th-cell { border: 1px solid black; text-align: center; font-weight: bold; background-color: #f8fafc; font-size: 10px; }
+              td, th { vertical-align: middle; }
+              .b-all { border: 0.5pt solid #000000; }
+              .text-center { text-align: center; }
+              .text-left { text-align: left; }
+              .text-right { text-align: right; }
+              .font-bold { font-weight: bold; }
+              .bg-blue { background-color: #1e3a8a; color: #ffffff; }
+              .bg-sub { background-color: #eff6ff; }
+              .bg-gray-sub { background-color: #f1f5f9; }
+              .bg-total { background-color: #dbeafe; font-weight: bold; }
+              .bg-noclass { background-color: #fee2e2; color: #991b1b; font-style: italic; }
             </style>
           </head>
           <body>
-            <!-- MEMBRETE OFICIAL VENEZUELA MPPE -->
-            <table style="width: 100%; margin-bottom: 6px;">
-              <tr>
-                <td style="width: 25%; font-size: 10px; font-weight: bold; vertical-align: top;">
-                  Ministerio del Poder Popular para la<br>
-                  <span style="font-size: 14px;">EDUCACIÓN</span>
-                </td>
-                <td style="width: 50%; text-align: center; font-size: 10px; vertical-align: top;">
-                  República Bolivariana de Venezuela<br>
-                  Ministerio del Poder Popular para la Educación<br>
-                  <strong>${cfg.schoolName || 'U.E.N. República de Indonesia'}</strong><br>
-                  Código DEA: ${cfg.deaCode || 'OD 17441503'} - RIF: ${cfg.schoolRif || 'J-31685926-6'}<br>
-                  ${cfg.schoolLocation || 'Valle Arriba - Baruta'}
-                </td>
-                <td style="width: 25%; text-align: right; vertical-align: top; font-weight: bold; font-size: 10px;">
-                  [ MPPE ]
-                </td>
-              </tr>
-            </table>
+            <table border="0" cellpadding="3" cellspacing="0">
+              <col width="32">  <!-- A: DIA -->
+              <col width="55">  <!-- B: FECHA -->
+              <col width="42">  <!-- C: V -->
+              <col width="42">  <!-- D: H -->
+              <col width="48">  <!-- E: T -->
+              <col width="16">  <!-- F: SEPARADOR -->
+              <col width="150"> <!-- G: Concepto / Nombre -->
+              <col width="35">  <!-- H: Gen / Edad -->
+              <col width="40">  <!-- I: V / Condición -->
+              <col width="75">  <!-- J: Plantel / H -->
+              <col width="75">  <!-- K: Total -->
+              <col width="40">  <!-- L: V -->
+              <col width="40">  <!-- M: H -->
+              <col width="45">  <!-- N: Total -->
 
-            <div class="title-main">RESUMEN ESTADISTICO MENSUAL DEL GRADO</div>
-
-            <table class="sub-title-table">
+              <!-- MEMBRETE OFICIAL VENEZUELA MPPE -->
               <tr>
-                <td><strong>MES:</strong> ${monthName.toUpperCase()}</td>
-                <td><strong>DIAS HÁBILES:</strong> ${diasHabiles}</td>
-                <td><strong>GRADO:</strong> ${cfg.grade || ''}</td>
-                <td><strong>SECCIÓN:</strong> ${cfg.section || ''}</td>
+                <td colspan="14" class="text-center font-bold" style="font-size: 11pt;">REPÚBLICA BOLIVARIANA DE VENEZUELA</td>
               </tr>
               <tr>
-                <td colspan="2"><strong>DOCENTE:</strong> ${cfg.teacherName || ''}</td>
-                <td colspan="2"><strong>AÑO ESCOLAR:</strong> ${cfg.schoolYear || '2025-2026'}</td>
+                <td colspan="14" class="text-center font-bold" style="font-size: 10pt;">MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN</td>
               </tr>
-            </table>
-
-            <!-- CUERPO PRINCIPAL EN 2 COLUMNAS (TABLA MAESTRA) -->
-            <table style="width: 100%;">
-              <tr style="vertical-align: top;">
-                
-                <!-- COLUMNA IZQUIERDA: ASISTENCIA DIARIA -->
-                <td style="width: 44%; padding-right: 12px;">
-                  <table style="width: 100%;">
-                    <thead>
-                      <tr style="height: 22px;">
-                        <th class="th-cell" style="width: 32px;">DIA</th>
-                        <th class="th-cell" style="width: 55px;">FECHA</th>
-                        <th class="th-cell" style="width: 38px;">V</th>
-                        <th class="th-cell" style="width: 38px;">H</th>
-                        <th class="th-cell" style="width: 42px;">T</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${rowsDailyHtml}
-                    </tbody>
-                  </table>
-
-                  <br>
-                  <!-- CUADRO ASISTENCIA -->
-                  <table style="width: 100%;">
-                    <thead>
-                      <tr>
-                        <th colspan="4" class="table-section-title">ASISTENCIA</th>
-                      </tr>
-                      <tr style="height: 20px;">
-                        <th class="th-cell">GENERO</th>
-                        <th class="th-cell" style="width: 42px;">V</th>
-                        <th class="th-cell" style="width: 42px;">H</th>
-                        <th class="th-cell" style="width: 48px;">T</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr style="height: 21px;">
-                        <td style="border: 1px solid black; font-weight: bold; padding-left: 6px;">Promedio</td>
-                        <td style="border: 1px solid black; text-align: center;">${promV}</td>
-                        <td style="border: 1px solid black; text-align: center;">${promH}</td>
-                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${promT}</td>
-                      </tr>
-                      <tr style="height: 21px;">
-                        <td style="border: 1px solid black; font-weight: bold; padding-left: 6px;">Porcentaje</td>
-                        <td style="border: 1px solid black; text-align: center;">${porcV}</td>
-                        <td style="border: 1px solid black; text-align: center;">${porcH}</td>
-                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${porcT}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </td>
-
-                <!-- COLUMNA DERECHA: MOVIMIENTOS, INGRESADOS, EGRESADOS, REPITIENTES Y EDADES -->
-                <td style="width: 56%;">
-                  
-                  <!-- 1. MOVIMIENTOS -->
-                  <table style="width: 100%; margin-bottom: 8px;">
-                    <thead>
-                      <tr style="height: 20px;">
-                        <th class="table-section-title" style="text-align: left; padding-left: 6px;">MOVIMIENTOS</th>
-                        <th class="th-cell" style="width: 36px;">V</th>
-                        <th class="th-cell" style="width: 36px;">H</th>
-                        <th class="th-cell" style="width: 40px;">T</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr style="height: 20px;">
-                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES MATRICULADOS EN 1º DIA DEL MES</td>
-                        <td style="border: 1px solid black; text-align: center;">${matIniV}</td>
-                        <td style="border: 1px solid black; text-align: center;">${matIniH}</td>
-                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${matIniT}</td>
-                      </tr>
-                      <tr style="height: 20px;">
-                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES INGRESADOS DURANTE EL MES</td>
-                        <td style="border: 1px solid black; text-align: center;">${ingV}</td>
-                        <td style="border: 1px solid black; text-align: center;">${ingH}</td>
-                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${ingT}</td>
-                      </tr>
-                      <tr style="height: 20px;">
-                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES EXTRANJEROS MATRICULADOS</td>
-                        <td style="border: 1px solid black; text-align: center;">${extV}</td>
-                        <td style="border: 1px solid black; text-align: center;">${extH}</td>
-                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${extT}</td>
-                      </tr>
-                      <tr style="height: 20px;">
-                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES RETIRADOS DURANTE EL MES</td>
-                        <td style="border: 1px solid black; text-align: center;">${egV}</td>
-                        <td style="border: 1px solid black; text-align: center;">${egH}</td>
-                        <td style="border: 1px solid black; text-align: center; font-weight: bold;">${egT}</td>
-                      </tr>
-                      <tr style="height: 20px; font-weight: bold; background-color: #f8fafc;">
-                        <td style="border: 1px solid black; font-size: 10px; padding-left: 4px;">ESTUDIANTES MATRICULADO FIN DEL MES</td>
-                        <td style="border: 1px solid black; text-align: center;">${matFinV}</td>
-                        <td style="border: 1px solid black; text-align: center;">${matFinH}</td>
-                        <td style="border: 1px solid black; text-align: center;">${matFinT}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  <!-- 2. ESTUDIANTES INGRESADOS/AS -->
-                  <table style="width: 100%; margin-bottom: 8px;">
-                    <thead>
-                      <tr><th colspan="4" class="table-section-title">ESTUDIANTES INGRESADOS/AS</th></tr>
-                      <tr style="height: 19px;">
-                        <th class="th-cell">Nombre Y Apellido</th>
-                        <th class="th-cell" style="width: 35px;">Gen</th>
-                        <th class="th-cell">Plantel de Procedencia</th>
-                        <th class="th-cell" style="width: 65px;">Fecha/In</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${rowsIngresados}
-                    </tbody>
-                  </table>
-
-                  <!-- 3. ESTUDIANTES EGRESADOS/AS -->
-                  <table style="width: 100%; margin-bottom: 8px;">
-                    <thead>
-                      <tr><th colspan="4" class="table-section-title">ESTUDIANTES EGRESADOS/AS</th></tr>
-                      <tr style="height: 19px;">
-                        <th class="th-cell">Nombre y Apellido</th>
-                        <th class="th-cell" style="width: 35px;">Gen</th>
-                        <th class="th-cell">Plantel aceptación de cupo</th>
-                        <th class="th-cell" style="width: 65px;">Fecha/R</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${rowsEgresados}
-                    </tbody>
-                  </table>
-
-                  <!-- 4. ESTUDIANTES REPITIENTES -->
-                  <table style="width: 100%; margin-bottom: 8px;">
-                    <thead>
-                      <tr><th colspan="5" class="table-section-title">ESTUDIANTES REPITIENTES</th></tr>
-                      <tr style="height: 19px;">
-                        <th class="th-cell">Nombre y Apellido</th>
-                        <th class="th-cell" style="width: 38px;">Edad</th>
-                        <th class="th-cell" style="width: 44px;">1º vez</th>
-                        <th class="th-cell" style="width: 44px;">2º vez</th>
-                        <th class="th-cell" style="width: 44px;">3º vez</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${rowsRepitientes}
-                    </tbody>
-                  </table>
-
-                  <!-- 5. CLASIFICACIÓN POR EDAD Y GENERO -->
-                  <table style="width: 100%;">
-                    <thead>
-                      <tr><th colspan="8" class="table-section-title">CLASIFICACIÓN POR EDAD Y GENERO</th></tr>
-                      <tr style="height: 18px;">
-                        <th class="th-cell" style="width: 35px;">Edad</th>
-                        <th class="th-cell" style="width: 25px;">V</th>
-                        <th class="th-cell" style="width: 25px;">H</th>
-                        <th class="th-cell" style="width: 35px;">Total</th>
-                        <th class="th-cell" style="width: 35px;">Edad</th>
-                        <th class="th-cell" style="width: 25px;">V</th>
-                        <th class="th-cell" style="width: 25px;">H</th>
-                        <th class="th-cell" style="width: 35px;">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${rowsEdades}
-                    </tbody>
-                  </table>
-
+              <tr style="height: 25px;">
+                <td colspan="14" class="text-center font-bold bg-blue" style="font-size: 11pt; border: 0.5pt solid #000;">
+                  RESUMEN ESTADÍSTICO MENSUAL DEL GRADO — ${monthName.toUpperCase()} ${year}
                 </td>
               </tr>
-            </table>
 
-            <br>
-            <!-- PIE DE PÁGINA (FECHA DE ENTREGA Y FIRMAS EN BLANCO) -->
-            <table style="width: 100%; margin-top: 25px;">
+              <!-- FILA DE DATOS INSTITUCIONALES -->
+              <tr style="height: 20px; background-color: #f8fafc;">
+                <td colspan="5" class="b-all font-bold">Plantel: <span style="font-weight:normal;">${cfg.schoolName || 'U.E.N. República de Indonesia'}</span></td>
+                <td class="text-center"></td>
+                <td colspan="4" class="b-all font-bold">Código DEA: <span style="font-weight:normal;">${cfg.deaCode || 'OD 17441503'}</span></td>
+                <td colspan="4" class="b-all font-bold">Ubicación: <span style="font-weight:normal;">${cfg.schoolLocation || 'Valle Arriba - Baruta'}</span></td>
+              </tr>
+              <tr style="height: 20px; background-color: #f8fafc;">
+                <td colspan="5" class="b-all font-bold">Docente: <span style="font-weight:normal;">${cfg.teacherName || ''}</span></td>
+                <td class="text-center"></td>
+                <td colspan="4" class="b-all font-bold">Grado y Sección: <span style="font-weight:normal;">${cfg.grade || ''} "${cfg.section || ''}"</span></td>
+                <td colspan="4" class="b-all font-bold">Año Escolar: <span style="font-weight:normal;">${cfg.schoolYear || `${year}-${Number(year) + 1}`}</span></td>
+              </tr>
+
+              <tr style="height: 8px;"><td colspan="14"></td></tr>
+
+              <!-- CABECERAS DE SECCIÓN -->
+              <tr style="height: 22px;">
+                <td colspan="5" class="text-center font-bold bg-blue b-all" style="font-size: 9.5pt;">REGISTRO DIARIO DE ASISTENCIA</td>
+                <td></td>
+                <td colspan="8" class="text-center font-bold bg-blue b-all" style="font-size: 9.5pt;">MOVIMIENTO DE MATRÍCULA Y ESTADÍSTICAS DEL MES</td>
+              </tr>
+
+              <tr style="height: 20px;" class="bg-gray-sub font-bold text-center">
+                <td class="b-all">DÍA</td>
+                <td class="b-all">FECHA</td>
+                <td class="b-all">V</td>
+                <td class="b-all">H</td>
+                <td class="b-all">T</td>
+                <td></td>
+                <td colspan="8" class="b-all text-left" style="padding-left: 6px;">DETALLE OFICIAL SEGÚN FORMATO MPPE</td>
+              </tr>
+
+              ${tableRowsHtml}
+
+              <!-- PIE DE PÁGINA (FECHA DE ENTREGA Y FIRMAS) -->
+              <tr style="height: 18px;"><td colspan="14"></td></tr>
+              <tr style="height: 22px;">
+                <td colspan="14" class="text-left font-bold" style="font-size: 10pt;">
+                  Fecha de entrega: _____ / _____ / _________
+                </td>
+              </tr>
+              <tr style="height: 40px;"><td colspan="14"></td></tr>
               <tr>
-                <td colspan="2" style="font-size: 11px; padding-bottom: 25px;">
-                  <strong>Fecha de entrega:</strong> _____ / _____ / _________
+                <td colspan="5" class="text-center font-bold" style="border-top: 1pt solid #000;">
+                  Firma del (de la) Docente
                 </td>
-              </tr>
-              <tr>
-                <td style="width: 50%; text-align: center; vertical-align: bottom;">
-                  ____________________________________<br>
-                  <strong>Firma del (de la) Docente</strong>
-                </td>
-                <td style="width: 50%; text-align: center; vertical-align: bottom;">
-                  ____________________________________<br>
-                  <strong>Firma Directivo</strong>
+                <td></td>
+                <td colspan="8" class="text-center font-bold" style="border-top: 1pt solid #000;">
+                  Firma Directivo
                 </td>
               </tr>
             </table>

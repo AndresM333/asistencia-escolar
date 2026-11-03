@@ -43,7 +43,7 @@ El proceso tradicional mediante papel o planillas manuscritas presenta una tasa 
 Esta aplicación elimina completamente estos problemas mediante:
 - **Cálculo Automático en Tiempo Real**: El Total ($T$), los promedios y porcentajes se computan sin intervención manual.
 - **Validación Estricta de Entradas**: Solo admite números enteros positivos; previene el ingreso de valores negativos o caracteres erróneos.
-- **Fusión Inteligente de Celdas**: Cuando se marca "Día sin clases", las celdas diarias se combinan visualmente y plasman el motivo (con control sugerido de hasta 20 palabras para no saturar el formato).
+- **Fusión Inteligente de Celdas**: Cuando se marca "Día sin clases", las celdas diarias se combinan visualmente y plasman el motivo (con control sugerido de hasta 20 palabras y 80 caracteres para no saturar el formato).
 - **Control Estricto de Ingresos, Egresos y Repitientes**: Mínimo 3 renglones y máximo estricto de 5 registros mensuales, cumpliendo con la cuadrícula de la planilla física.
 - **Exportación Idéntica al Formato Oficial**: Genera con 1 solo clic la planilla ministerial tanto en **Excel (.xls)** como en **PDF imprimible**, dejando en blanco los espacios de entrega y firmas para la validación manuscrita.
 

@@ -278,11 +278,27 @@
       border-radius: 6px;
       background: #f1f5f9;
       color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
     }
 
     .word-counter-badge.warn {
       background: #fef3c7;
       color: #b45309;
+      border: 1px solid #fcd34d;
+    }
+
+    body.dark-mode .word-counter-badge {
+      background: #334155;
+      color: #cbd5e1;
+    }
+
+    body.dark-mode .word-counter-badge.warn {
+      background: #78350f;
+      color: #fef3c7;
+      border-color: #b45309;
     }
 
     .reason-textarea {
@@ -865,10 +881,10 @@
             <label style="font-size: 11px; font-weight: 700; color: #dc2626; text-transform: uppercase;">
               Motivo o razón de suspensión:
             </label>
-            <span id="wordCountBadge" class="word-counter-badge">0 / 20 palabras sugeridas</span>
+            <span id="wordCountBadge" class="word-counter-badge">0 / 20 palabras &bull; 0 / 80 caracteres</span>
           </div>
           <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">
-            💡 <em>Sugerencia: No exceder 20 palabras para que ajuste perfectamente en la casilla del formato oficial.</em>
+            💡 <em>Sugerencia: No exceder 20 palabras ni 80 caracteres para que ajuste perfectamente en la casilla del formato oficial.</em>
           </p>
           <textarea id="inputNoClassReason" class="reason-textarea" placeholder="Ej: Suspensión por mantenimiento de aulas y fumigación general..."></textarea>
         </div>
@@ -1846,7 +1862,7 @@
 
           if (rec && rec.isNoClass) {
             let reason = (rec.noClassReason || 'Sin actividad escolar').trim();
-            if (reason.length > 40) reason = reason.substring(0, 37) + '...';
+            if (reason.length > 80) reason = reason.substring(0, 77) + '...';
             leftRows.push({
               type: 'noclass',
               letter: dLetter,
@@ -2371,7 +2387,7 @@
 
           if (rec && rec.isNoClass) {
             rect(colX[2], curY, leftW - (colX[2] - leftX), rowH, '0.99 0.92 0.92', null);
-            let reason = (rec.noClassReason || 'Sin actividad').substring(0, 38);
+            let reason = (rec.noClassReason || 'Sin actividad').substring(0, 75);
             text('F2', 6.5, colX[2] + 6, curY + 3.5, `* ${reason}`);
           } else if (rec) {
             const v = rec.ninos || 0, h = rec.ninas || 0, t = v + h;
@@ -2574,7 +2590,7 @@
 
           if (record && record.isNoClass) {
             let reasonText = (record.noClassReason || 'Sin actividad escolar').trim();
-            if (reasonText.length > 38) reasonText = reasonText.substring(0, 35) + '...';
+            if (reasonText.length > 75) reasonText = reasonText.substring(0, 72) + '...';
             rowsDailyHtml += `
               <tr style="height: 18px;">
                 <td class="c-border text-center font-bold">${dayLetter}</td>
@@ -3163,18 +3179,21 @@
         });
       });
 
-      // Contador de palabras en el motivo
+      // Contador de palabras y caracteres en el motivo
       function updateWordCount() {
-        const text = inputNoClassReason.value.trim();
-        const words = text ? text.split(/\s+/).length : 0;
-        wordCountBadge.textContent = `${words} / 20 palabras sugeridas`;
-        if (words > 20) {
+        const rawText = inputNoClassReason.value || '';
+        const trimmed = rawText.trim();
+        const words = trimmed ? trimmed.split(/\s+/).length : 0;
+        const chars = rawText.length;
+
+        wordCountBadge.textContent = `${words} / 20 palabras · ${chars} / 80 caracteres`;
+
+        if (words > 20 || chars > 80) {
           wordCountBadge.classList.add('warn');
         } else {
           wordCountBadge.classList.remove('warn');
         }
       }
-
       inputNoClassReason.addEventListener('input', updateWordCount);
 
       // Selector de clases Sí / No
